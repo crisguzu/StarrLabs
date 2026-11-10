@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>{{ player.name }} — StarrLabs Research Report</title>
+  <link rel="icon" type="image/png" href="/static/favicon.ico">
+  <link rel="stylesheet" href="/static/styles/main.css?v=mobile-quality-1">
+  <link rel="stylesheet" href="/static/styles/starrlabs.css?v=phase2-1">
+  <script src="/static/vendor/chart.min.js"></script>
+  <script src="/static/vendor/chartjs-plugin-datalabels.min.js"></script>
+  {% include "partials/analytics.html" %}
+</head>
+<body class="page-player">
+  {% include "partials/top_nav.html" %}
+
+  <div class="content-card">
+
+    <a class="back-link" href="/?registry=1">&larr; Player registry</a>
+
+    {% set player_icon_url = player.icon_id and
+        'https://cdn.brawlify.com/profile-icons/regular/' ~ player.icon_id ~ '.png' %}
+
+    <!-- =========================
+         TOP CONTAINER: Name + Filters (ONE container)
+         ========================= -->
+    <div class="player-head-card">
+      <div class="player-head-left">
+        <img
+          id="heroImage"
+          src="{{ player_icon_url or '/static/models/default.png' }}"
+          class="player-hero-img"
+          alt="Player / Brawler image"
+        >
+        <div class="player-head-text">
+          <div class="player-head-name">{{ player.name }}</div>
+          <div class="player-identity-meta">
+            {% if player.verified_player %}
+              <span class="verified-player-badge" title="Ownership verified by StarrLabs">
+                <img src="/static/verified/verified_24.png" alt=""> Verified Player
+              </span>
+            {% endif %}
+            <span class="player-head-tag">{{ player.tag }}</span>
+          </div>
+          {% if not player.verified_player %}
+            <a class="verify-profile-link" href="/verify-player/{{ player.tag.lstrip('#') }}">Verify this player</a>
+          {% endif %}
+          <a class="battles-link" href="/battles/{{ player.tag.lstrip('#') }}">View battle history</a>
+        </div>
+      </div>
+
+      <div class="player-head-right">
+        <div class="filters-box filters-box--top">
+          <label>
+            Mode
+            <select id="modeFilter">
+              <option value="all">All modes</option>
+            </select>
+          </label>
+
+          <label>
+            Type
+            <select id="typeFilter">
+              <option value="all">All types</option>
+            </select>
+          </label>
+
+          <label>
+            Brawler
+            <select id="brawlerFilter">
+              <option value="all">All brawlers</option>
+            </select>
+          </label>
+
+          <label>
+            Period
+            <select id="periodFilter">
+              <option value="7">Last 7 days</option>
+              <option value="14">Last 14 days</option>
+              <option value="30" selected>Last 30 days</option>
+              <option value="all">All time</option>
+            </select>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <aside class="sl-guide sl-guide--analysis" aria-label="MISSY analysis status">
+      <img src="/static/starrlabs/phase2/characters/missy-tablet-analysis.webp" alt="MISSY reviewing the player analysis">
+      <div><span>MISSY // ANALYSIS ACTIVE</span><strong>Player research synchronized</strong><p>Adjust the filters to focus the laboratory readout. Prediction analysis remains anchored to validated battle evidence.</p></div>
+      <i aria-hidden="true"></i>
+    </aside>
+
+    <!-- =========================
+         SECOND CONTAINER: Cards + Graph
+         ========================= -->
+    <div class="performance-card performance-card--wide">
+      <div class="perf-title">PERFORMANCE OVERVIEW</div>
+
+      <!-- KPI cards row (filters affect these too) -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">WINS</div>
+          <div class="kpi-value" id="kpiWins">—</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">DEFEATS</div>
+          <div class="kpi-value" id="kpiLosses">—</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">DRAWS</div>
+          <div class="kpi-value" id="kpiDraws">—</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">WIN RATIO</div>
+          <div class="kpi-value" id="kpiWinRate">—</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">DIFFICULTY</div>
+          <div class="kpi-pill perf-pill perf-pill--soon" id="kpiDifficulty">Coming soon</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">OVERPERFORMANCE</div>
+          <div class="kpi-pill perf-pill perf-pill--soon" id="kpiOverperf">Coming soon</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">TROPHIES</div>
+          <div class="kpi-value" id="kpiTrophies">{{ player.trophies or "-" }}</div>
+        </div>
+      </div>
+
+      <section class="profile-chart-panel" aria-labelledby="profileChartTitle">
+        <div class="profile-chart-head">
+          <div>
+            <div class="profile-chart-kicker">TRACKING HISTORY</div>
+            <h3 id="profileChartTitle">Battle activity</h3>
+            <p id="profileChartDescription">Daily wins, losses, and draws since tracking began.</p>
+          </div>
+          <div class="profile-chart-tabs" role="tablist" aria-label="Chart view">
+            <button class="profile-chart-tab is-active" type="button" role="tab" aria-selected="true" data-chart-view="activity">Battles</button>
+            <button class="profile-chart-tab" type="button" role="tab" aria-selected="false" data-chart-view="trophies">Trophies</button>
+          </div>
+        </div>
+        <div class="profile-chart-summary" id="profileChartSummary" aria-live="polite"></div>
+        <div class="chart-wrap chart-wrap--tall">
+          <canvas id="playerChart"></canvas>
+        </div>
+      </section>
+
+      <div class="chart-footnote">
+        “Time playing” here is interpreted as <strong>since tracking began</strong>
+        (first_seen → last_update). Brawl Stars does not expose account creation time.
+      </div>
+    </div>
+
+    {% include "partials/profile_prediction_overview.html" %}
+  </div>
+
+  <script>
+    Chart.register(ChartDataLabels);
+
+    const playerTagNoHash = "{{ player.tag.lstrip('#') }}";
+
+    const modeSelect = document.getElementById("modeFilter");
+    const typeSelect = document.getElementById("typeFilter");
+    const brawlerSelect = document.getElementById("brawlerFilter");
+    const periodSelect = document.getElementById("periodFilter");
+
+    document.querySelectorAll("time[data-context-time]").forEach((el) => {
+      const parsed = new Date(el.getAttribute("data-context-time"));
+      if (!Number.isNaN(parsed.getTime())) el.textContent = new Intl.DateTimeFormat(undefined, {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}).format(parsed);
+    });
+    const lensTabs = document.querySelectorAll("[data-lens]");
+    const lensPanels = document.querySelectorAll("[data-lens-panel]");
+    lensTabs.forEach((tab) => tab.addEventListener("click", () => {
+      const target = tab.getAttribute("data-lens");
+      lensTabs.forEach((item) => item.classList.toggle("is-active", item === tab));
+      lensPanels.forEach((panel) => panel.classList.toggle("is-active", panel.getAttribute("data-lens-panel") === target));
+    }));
+
+    const heroImage = document.getElementById("heroImage");
+    const PLAYER_ICON = "{{ player_icon_url or '' }}";
+    const FALLBACK_IMG = "/static/models/default.png";
+
+    const kpiWins = document.getElementById("kpiWins");
+    const kpiLosses = document.getElementById("kpiLosses");
+    const kpiDraws = document.getElementById("kpiDraws");
+    const kpiWinRate = document.getElementById("kpiWinRate");
+
+    const ctx = document.getElementById("playerChart").getContext("2d");
+
+    const brawlerModels = {};          // name -> model_url
+    const knownBrawlers = new Set(["all"]);
+    const knownModes = new Set(["all"]);
+    const knownTypes = new Set(["all"]);
+
+    let playerChart = null;
+
+    function setHeroImageForSelection() {
+      const selectedBrawler = brawlerSelect.value || "all";
+      if (selectedBrawler !== "all" && brawlerModels[selectedBrawler]) {
+        heroImage.src = brawlerModels[selectedBrawler];
+        heroImage.alt = `${selectedBrawler} image`;
+        return;
+      }
+      heroImage.src = PLAYER_ICON || FALLBACK_IMG;
+      heroImage.alt = "Player image";
+    }
+
+    function updateKpis(overall) {
+      if (!overall) {
+        kpiWins.textContent = "—";
+        kpiLosses.textContent = "—";
+        kpiDraws.textContent = "—";
+        kpiWinRate.textContent = "—";
+        return;
+      }
+      const wins = overall.wins || 0;
+      const losses = overall.losses || 0;
+      const draws = overall.draws || 0;
+      const total = overall.total || 0;
+      const wr = (overall.winrate_pct ?? (total ? (wins * 100.0 / total) : 0)).toFixed(1);
+
+      kpiWins.textContent = wins;
+      kpiLosses.textContent = losses;
+      kpiDraws.textContent = draws;
+      kpiWinRate.textContent = `${wr}%`;
+    }
+
+    let chartView = "activity";
+    let currentPerDay = [];
+
+    const chartTitle = document.getElementById("profileChartTitle");
+    const chartDescription = document.getElementById("profileChartDescription");
+    const chartSummary = document.getElementById("profileChartSummary");
+    const chartTabs = document.querySelectorAll("[data-chart-view]");
+
+    function compactDate(value) {
+      const parsed = new Date(`${value}T12:00:00`);
+      if (Number.isNaN(parsed.getTime())) return value;
+      return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(parsed);
+    }
+
+    function renderChart(perDay) {
+      currentPerDay = Array.isArray(perDay) ? perDay : [];
+      const labels   = perDay.map(d => d.date);
+      const trophies = perDay.map(d => d.trophies ?? null);
+      const wins     = perDay.map(d => d.wins ?? 0);
+      const losses   = perDay.map(d => d.losses ?? 0);
+      const draws    = perDay.map(d => d.draws ?? 0);
+
+      if (playerChart) playerChart.destroy();
+
+      const totalWins = wins.reduce((sum, value) => sum + value, 0);
+      const totalLosses = losses.reduce((sum, value) => sum + value, 0);
+      const totalDraws = draws.reduce((sum, value) => sum + value, 0);
+      const trophyPoints = trophies.filter(value => Number.isFinite(value));
+      const trophyStart = trophyPoints.length ? trophyPoints[0] : null;
+      const trophyCurrent = trophyPoints.length ? trophyPoints[trophyPoints.length - 1] : null;
+      const trophyChange = trophyStart !== null && trophyCurrent !== null ? trophyCurrent - trophyStart : null;
+
+      const isActivity = chartView === "activity";
+      chartTitle.textContent = isActivity ? "Battle activity" : "Trophy trend";
+      chartDescription.textContent = isActivity
+        ? "Daily wins, losses, and draws since tracking began."
+        : "Account trophy movement across saved profile snapshots.";
+      chartSummary.innerHTML = isActivity
+        ? `<span><i class="chart-swatch chart-swatch--win"></i><b>${totalWins}</b> wins</span><span><i class="chart-swatch chart-swatch--loss"></i><b>${totalLosses}</b> losses</span>${totalDraws ? `<span><i class="chart-swatch chart-swatch--draw"></i><b>${totalDraws}</b> draws</span>` : ""}`
+        : `<span><small>START</small><b>${trophyStart ?? "—"}</b></span><span><small>CURRENT</small><b>${trophyCurrent ?? "—"}</b></span><span class="${trophyChange > 0 ? "is-positive" : trophyChange < 0 ? "is-negative" : ""}"><small>CHANGE</small><b>${trophyChange === null ? "—" : `${trophyChange > 0 ? "+" : ""}${trophyChange}`}</b></span>`;
+
+      const datasets = isActivity ? [
+        { type: "bar", label: "Wins", data: wins, stack: "games",
+          backgroundColor: "#2fc77a", borderColor: "#0c8553", borderWidth: 1, borderRadius: 5, maxBarThickness: 24 },
+        { type: "bar", label: "Losses", data: losses, stack: "games",
+          backgroundColor: "#e84f62", borderColor: "#a32436", borderWidth: 1, borderRadius: 5, maxBarThickness: 24 },
+        { type: "bar", label: "Draws", data: draws, stack: "games",
+          backgroundColor: "#aab2c2", borderColor: "#687287", borderWidth: 1, borderRadius: 5, maxBarThickness: 24 },
+      ] : [
+        { type: "line", label: "Trophies", data: trophies, fill: true,
+          tension: 0.28, borderColor: "#ff4f92", backgroundColor: "rgba(255,79,146,.16)",
+          pointRadius: labels.length > 18 ? 0 : 2.5, pointHoverRadius: 5,
+          pointBackgroundColor: "#ffd14a", pointBorderColor: "#171629", pointBorderWidth: 2,
+          borderWidth: 3, spanGaps: true },
+      ];
+
+      playerChart = new Chart(ctx, {
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: "index", intersect: false },
+          scales: {
+            x: { stacked: isActivity, grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 5, callback: (_, index) => compactDate(labels[index]) } },
+            y: { stacked: isActivity, beginAtZero: isActivity, grace: isActivity ? "8%" : "5%", grid: { color: "rgba(198,220,224,.12)" }, ticks: { maxTicksLimit: 5 } },
+          },
+          plugins: {
+            datalabels: { display: false },
+            legend: { display: false },
+            tooltip: { enabled: true, displayColors: isActivity, callbacks: { title: items => items.length ? compactDate(labels[items[0].dataIndex]) : "" } },
+          },
+        },
+      });
+    }
+
+    chartTabs.forEach(tab => tab.addEventListener("click", () => {
+      chartView = tab.dataset.chartView;
+      chartTabs.forEach(item => {
+        const active = item === tab;
+        item.classList.toggle("is-active", active);
+        item.setAttribute("aria-selected", String(active));
+      });
+      renderChart(currentPerDay);
+    }));
+
+    function updateBrawlerOptions(items) {
+      if (!Array.isArray(items)) return;
+      items.forEach(item => {
+        const name = item.name;
+        if (!name) return;
+
+        if (!knownBrawlers.has(name)) {
+          knownBrawlers.add(name);
+          const opt = document.createElement("option");
+          opt.value = name;
+          opt.textContent = name;
+          brawlerSelect.appendChild(opt);
+        }
+
+        if (item.model_url && !brawlerModels[name]) brawlerModels[name] = item.model_url;
+      });
+    }
+
+    function updateModeOptions(items) {
+      if (!Array.isArray(items)) return;
+      items.forEach(item => {
+        const value = item.value;
+        const label = item.label || item.value;
+        if (!value || knownModes.has(value)) return;
+        knownModes.add(value);
+
+        const opt = document.createElement("option");
+        opt.value = value;
+        opt.textContent = label;
+        modeSelect.appendChild(opt);
+      });
+    }
+
+    function updateTypeOptions(items) {
+      if (!Array.isArray(items)) return;
+      items.forEach(item => {
+        const value = item.value;
+        const label = item.label || item.value;
+        if (!value || knownTypes.has(value)) return;
+        knownTypes.add(value);
+
+        const opt = document.createElement("option");
+        opt.value = value;
+        opt.textContent = label;
+        typeSelect.appendChild(opt);
+      });
+    }
+
+    async function loadStats() {
+      const currentMode    = modeSelect.value || "all";
+      const currentType    = typeSelect.value || "all";
+      const currentBrawler = brawlerSelect.value || "all";
+      const currentPeriod  = periodSelect.value || "30";
+
+      const params = new URLSearchParams();
+      if (currentMode !== "all") params.set("mode", currentMode);
+      if (currentType !== "all") params.set("btype", currentType);
+      if (currentBrawler !== "all") params.set("brawler", currentBrawler);
+      params.set("period", currentPeriod);
+
+      try {
+        const resp = await fetch(`/api/player-daily-stats/${encodeURIComponent(playerTagNoHash)}?` + params.toString());
+        if (!resp.ok) throw new Error("Failed to load stats");
+        const data = await resp.json();
+
+        updateKpis(data.overall);
+        updateBrawlerOptions(data.brawlers);
+        updateModeOptions(data.modes);
+        updateTypeOptions(data.types);
+
+        setHeroImageForSelection();
+        renderChart(data.per_day || []);
+      } catch (err) {
+        console.error(err);
+        updateKpis(null);
+      }
+    }
+
+    modeSelect.addEventListener("change", loadStats);
+    typeSelect.addEventListener("change", loadStats);
+    brawlerSelect.addEventListener("change", () => { setHeroImageForSelection(); loadStats(); });
+    periodSelect.addEventListener("change", loadStats);
+
+    loadStats();
+    let lastCompanionRefresh = Date.now();
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden && Date.now() - lastCompanionRefresh > 15000) {
+        lastCompanionRefresh = Date.now();
+        loadStats();
+      }
+    });
+    window.setInterval(() => {
+      if (!document.hidden) { lastCompanionRefresh = Date.now(); loadStats(); }
+    }, 60000);
+  </script>
+</body>
+</html>

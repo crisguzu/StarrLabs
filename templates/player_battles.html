@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Battle Archive — {{ tag }} — StarrLabs</title>
+  <link rel="icon" type="image/png" href="/static/favicon.ico">
+  <link rel="stylesheet" href="/static/styles/main.css?v=mobile-quality-1">
+  <link rel="stylesheet" href="/static/styles/starrlabs.css?v=phase2-detail-1">
+  {% include "partials/analytics.html" %}
+</head>
+
+<body class="page-battles">
+  {% include "partials/top_nav.html" %}
+
+  <div class="content-card">
+    <a class="back-link" href="/player/{{ tag.lstrip('#') }}">&larr; Back to player</a>
+
+    {# ---- HERO + FILTERS (like player.html) ---- #}
+    {% set player_icon_url = player_icon_url or None %}
+
+    <div class="player-head-card">
+      <div class="player-head-left">
+        <img
+          id="heroImage"
+          class="player-hero-img"
+          src="{{ player_icon_url or '/static/models/default.png' }}"
+          alt="Player / Brawler image"
+          onerror="this.onerror=null; this.src='/static/models/default.png';"
+        />
+        <div class="player-head-text">
+          <div class="player-head-name">BATTLE ARCHIVE</div>
+          <div class="subtitle subtitle--compact">
+            Recent matches for <span class="tag">{{ tag }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="player-head-right">
+        <button type="button" class="mobile-filter-toggle" aria-expanded="false" aria-controls="filtersForm">Filters</button>
+        <form id="filtersForm" class="filters-box filters-box--top battles-filters" method="get">
+          <input type="hidden" name="page" value="{{ page or 1 }}">
+          <input type="hidden" name="from_ts" value="{{ from_ts or '' }}">
+          <input type="hidden" name="to_ts" value="{{ to_ts or '' }}">
+          {% if victory_score_filter %}<input type="hidden" name="victory_score" value="true">{% endif %}
+
+          <label>
+            From
+            <input type="date" name="from_date" value="{{ from_date }}">
+          </label>
+
+          <label>
+            To
+            <input type="date" name="to_date" value="{{ to_date }}">
+          </label>
+
+          <label>
+            Mode
+            <select name="mode">
+              <option value="">All</option>
+              {% for m in mode_options %}
+                <option value="{{ m.value }}" {% if mode_filter == m.value %}selected{% endif %}>
+                  {{ m.label }}
+                </option>
+              {% endfor %}
+            </select>
+          </label>
+
+          <label>
+            Type
+            <select name="btype">
+              <option value="">All</option>
+              {% for t in type_options %}
+                <option value="{{ t.value }}" {% if type_filter == t.value %}selected{% endif %}>
+                  {{ t.label }}
+                </option>
+              {% endfor %}
+            </select>
+          </label>
+
+          <label>
+            Brawler
+            <select name="brawler" id="brawlerFilter">
+              <option value="">All</option>
+              {% for br in brawler_options %}
+                <option
+                  value="{{ br.value }}"
+                  {% if brawler_filter == br.value %}selected{% endif %}
+                  {% if brawler_model_map and brawler_model_map.get(br.value) %}
+                    data-model="{{ brawler_model_map.get(br.value) }}"
+                  {% endif %}
+                >
+                  {{ br.label }}
+                </option>
+              {% endfor %}
+            </select>
+          </label>
+
+          <button type="submit" id="applyBtn">Apply</button>
+        </form>
+      </div>
+    </div>
+
+    {% if victory_score_filter %}
+      <aside class="score-filter-banner" aria-label="Victory Score battle filter is active">
+        <div><span>VICTORY SCORE V2 · 30 DAYS</span><strong>Only score-eligible Ladder battles</strong><small>These are the exact modeled wins and losses used in your current score. Friendly, Ranked, Showdown, 5v5, draws, and unsupported modes are excluded.</small></div>
+        <a href="/battles/{{ tag.lstrip('#') }}">Show all battles</a>
+      </aside>
+    {% endif %}
+
+    {# ---- SUMMARY CARDS (keep, but make them look like KPI row) ---- #}
+    <div class="performance-card performance-card--wide performance-card--spaced">
+      <div class="perf-title">SUMMARY</div>
+
+      <div class="kpi-grid kpi-grid--five">
+        <div class="kpi-card">
+          <div class="kpi-label">WIN RATE</div>
+          <div class="kpi-value">
+            {% if winrate is not none %}{{ winrate }}%{% else %}-{% endif %}
+          </div>
+          <div class="card-subtext">{{ summary.wins or 0 }} W · {{ summary.losses or 0 }} L · {{ summary.draws or 0 }} D</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">TOTAL BATTLES</div>
+          <div class="kpi-value">{{ summary.total_matches or 0 }}</div>
+          <div class="card-subtext">Filtered by current criteria</div>
+        </div>
+
+        {% if brawler_stats %}
+          {% set top_b = brawler_stats[0] %}
+          <div class="kpi-card">
+            <div class="kpi-label">TOP BRAWLER</div>
+            <div class="kpi-value cell-with-icon">
+              {% if top_b.brawler_icon %}
+                <img src="{{ top_b.brawler_icon }}" alt="" class="brawler-icon">
+              {% endif %}
+              <span>{{ top_b.brawler_name }}</span>
+            </div>
+            <div class="card-subtext">
+              {{ top_b.games }} games · {% if top_b.games %}{{ (top_b.wins * 100 // top_b.games) }}% WR{% endif %}
+            </div>
+          </div>
+        {% endif %}
+
+        {% if modes_stats %}
+          {% set top_m = modes_stats[0] %}
+          <div class="kpi-card">
+            <div class="kpi-label">TOP MODE</div>
+            <div class="kpi-value cell-with-icon">
+              {% if top_m.mode_icon %}
+                <img src="{{ top_m.mode_icon }}" alt="" class="brawler-icon">
+              {% endif %}
+              <span>{{ top_m.mode_name or 'Unknown' }}</span>
+            </div>
+            <div class="card-subtext">{{ top_m.games }} games</div>
+          </div>
+        {% endif %}
+
+        <div class="kpi-card">
+          <div class="kpi-label">STAR PLAYER</div>
+          <div class="kpi-value cell-with-icon">
+            <img
+              src="/static/star_player.png"
+              alt="Star Player"
+              class="star-icon star-icon--compact"
+            />
+            <span>{{ summary.star_player_games or 0 }}</span>
+          </div>
+          <div class="card-subtext">Times you were Star Player</div>
+        </div>
+
+      </div>
+    </div>
+
+    {# Aggregate prediction analysis belongs on the player profile. #}
+    {% if false %}
+    {% set c7 = companion_summary.windows.get(7, {}) %}
+    {% set c30 = companion_summary.windows.get(30, {}) %}
+    <section class="companion-summary" aria-labelledby="companion-summary-title">
+      <div class="companion-summary-head">
+        <div>
+          <span class="companion-summary-kicker">COMPANION READOUT</span>
+          <h2 id="companion-summary-title">Did you beat the expectation?</h2>
+          <p>Actual Ladder wins compared with the sum of each modeled battle’s win chance.</p>
+        </div>
+        <div class="companion-score-dial">
+          <span>VICTORY SCORE</span>
+          <strong>{% if companion_summary.victory_score is not none %}{{ companion_summary.victory_score }}{% else %}—{% endif %}</strong>
+          <small>Current 30-day score</small>
+        </div>
+      </div>
+
+      <div class="companion-window-grid">
+        {% for days, window in [(7, c7), (30, c30)] %}
+          {% set delta = window.overperformance or 0 %}
+          <article class="companion-window {% if delta > 0 %}is-ahead{% elif delta < 0 %}is-behind{% else %}is-even{% endif %}">
+            <div class="companion-window-title"><span>{{ days }} DAYS</span><b>{{ window.modeled_battles or 0 }} modeled</b></div>
+            <div class="companion-versus">
+              <div><small>ACTUAL WINS</small><strong>{{ window.actual_wins or 0 }}</strong></div>
+              <i>VS</i>
+              <div><small>EXPECTED WINS</small><strong>{{ window.expected_wins or 0 }}</strong></div>
+            </div>
+            <div class="companion-delta">
+              <strong>{% if delta > 0 %}+{% endif %}{{ delta }}</strong>
+              <span>{% if delta > 0 %}wins above expectation{% elif delta < 0 %}wins below expectation{% else %}right on expectation{% endif %}</span>
+            </div>
+            <div class="companion-coverage">
+              <progress max="100" value="{{ window.coverage_pct or 0 }}">{{ window.coverage_pct or 0 }}%</progress>
+              <small>{{ window.coverage_pct or 0 }}% modeled · {{ window.unmodeled_battles or 0 }} unmodeled</small>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+
+      <div class="companion-trend-row">
+        <div class="companion-trend-copy">
+          <span>14-DAY EXPECTATION TREND</span>
+          <strong class="{% if companion_summary.trend_change > 0 %}is-positive{% elif companion_summary.trend_change < 0 %}is-negative{% endif %}">
+            {% if companion_summary.trend_change > 0 %}+{% endif %}{{ companion_summary.trend_change }} wins
+          </strong>
+          <small>Latest 7-day overperformance versus the prior 7 days. This is the trend behind the score—not a fabricated historical Victory Score.</small>
+        </div>
+        <div class="companion-spark" aria-label="Daily wins above or below model expectation">
+          {% for point in companion_summary.trend %}
+            <i class="trend-level-{{ point.level }} {% if point.delta > 0 %}is-positive{% elif point.delta < 0 %}is-negative{% else %}is-zero{% endif %}" title="{{ point.day }} · {{ point.delta }} wins vs expected · {{ point.modeled }} modeled"></i>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <section class="context-deck context-deck--{{ progression_context.status }}" aria-labelledby="context-deck-title">
+      <div class="context-deck-head">
+        <div><span class="context-live-dot"></span><div><small>DATA &amp; PROGRESSION</small><h2 id="context-deck-title">Context you can trust</h2></div></div>
+        <strong>{% if progression_context.status == 'healthy' %}Fresh{% elif progression_context.status == 'attention' %}Gap flagged{% else %}Refresh delayed{% endif %}</strong>
+      </div>
+      <div class="context-grid">
+        <article>
+          <span>COLLECTION</span>
+          <strong>{% if progression_context.poll_age_minutes is not none %}{{ progression_context.poll_age_minutes }}m ago{% else %}No recent poll{% endif %}</strong>
+          <small>Battle polling · normally every {{ (progression_context.polling_interval_seconds or 900) // 60 }} minutes</small>
+          {% if progression_context.possible_gap or progression_context.possible_gap_battles_30d %}
+            <em>{{ progression_context.possible_gap_battles_30d }} recent battle rows carry a possible-gap flag</em>
+          {% else %}<em class="is-good">No collection gap currently flagged</em>{% endif %}
+        </article>
+        <article>
+          <span>PROFILE SNAPSHOT</span>
+          <strong>{% if progression_context.profile_age_minutes is not none %}{{ progression_context.profile_age_minutes }}m ago{% else %}Not captured yet{% endif %}</strong>
+          <small>Current progression context; never backfilled onto older battles</small>
+          <em class="is-good">Timestamped point-in-time source</em>
+        </article>
+        <article class="context-ranked">
+          <span>COMPETITIVE RANKED</span>
+          <strong>{{ progression_context.ranked_rank_name or 'Unranked' }}{% if progression_context.ranked_elo %} · {{ progression_context.ranked_elo }} ELO{% endif %}</strong>
+          <small>Season best: {{ progression_context.highest_season_ranked_rank_name or '—' }}{% if progression_context.highest_season_ranked_elo %} · {{ progression_context.highest_season_ranked_elo }}{% endif %}</small>
+          <div class="context-meter"><i style="--coverage:{{ progression_context.ranked_context_pct }}%"></i></div>
+          <em>{{ progression_context.ranked_elo_context_30d }}/{{ progression_context.ranked_battles_30d }} recent Ranked battles have honest pre-battle ELO · model still pending</em>
+        </article>
+        <article>
+          <span>ACCOUNT PROGRESSION</span>
+          <strong>{{ progression_context.trophies or '—' }} trophies</strong>
+          <small>Best {{ progression_context.highest_trophies or '—' }} · Prestige {{ progression_context.total_prestige_level if progression_context.total_prestige_level is not none else '—' }}</small>
+          <em>Shown as current context—not a battle prediction input unless timestamped before that battle</em>
+        </article>
+      </div>
+      <footer>
+        <span>Predictions refreshed {% if progression_context.latest_prediction_at %}<time data-context-time="{{ progression_context.latest_prediction_at.isoformat() }}">{{ progression_context.latest_prediction_at }}</time>{% else %}—{% endif %}</span>
+        <span>Ranked context is informational until its separate model passes validation.</span>
+      </footer>
+    </section>
+
+    <section class="performance-lenses" aria-labelledby="performance-lenses-title">
+      <div class="performance-lenses-head">
+        <div><span>30-DAY LADDER LENSES</span><h2 id="performance-lenses-title">Where are you beating the model?</h2></div>
+        <p>Actual wins versus expected wins. Sample labels prevent a few battles from looking like a durable trend.</p>
+      </div>
+      <div class="lens-tabs" role="tablist" aria-label="Performance breakdown">
+        <button type="button" class="is-active" data-lens="brawler">Brawlers</button>
+        <button type="button" data-lens="mode">Modes</button>
+        <button type="button" data-lens="map">Maps</button>
+      </div>
+      {% for dimension in ['brawler', 'mode', 'map'] %}
+        <div class="lens-panel {% if dimension == 'brawler' %}is-active{% endif %}" data-lens-panel="{{ dimension }}">
+          {% if companion_breakdowns[dimension] %}
+            {% for item in companion_breakdowns[dimension] %}
+              <article class="lens-row {% if item.delta > 0 %}is-ahead{% elif item.delta < 0 %}is-behind{% else %}is-even{% endif %}">
+                <div class="lens-identity">
+                  {% if item.icon %}<img src="{{ item.icon }}" alt="">{% else %}<i></i>{% endif %}
+                  <div><strong>{{ item.label }}</strong><small>{{ item.battles }} battles · <em class="sample-{{ item.sample_class }}">{{ item.sample_label }}</em></small></div>
+                </div>
+                <div class="lens-bars" aria-label="{{ item.actual_rate }}% actual win rate versus {{ item.expected_rate }}% expected">
+                  <span><small>ACTUAL</small><i style="--value:{{ item.bar_actual }}%"></i><b>{{ item.actual_rate }}%</b></span>
+                  <span><small>EXPECTED</small><i style="--value:{{ item.bar_expected }}%"></i><b>{{ item.expected_rate }}%</b></span>
+                </div>
+                <div class="lens-delta"><strong>{% if item.delta > 0 %}+{% endif %}{{ item.delta }}</strong><small>wins vs expected</small></div>
+              </article>
+            {% endfor %}
+          {% else %}
+            <p class="lens-empty">No modeled Ladder battles in this 30-day window.</p>
+          {% endif %}
+        </div>
+      {% endfor %}
+      <footer>Only validated Ladder predictions are included. “Early read” means fewer than 10 battles; “Emerging” means 10–19.</footer>
+    </section>
+    {% endif %}
+
+    {# ---- MATCH DETAIL: between-match opponent scouting report ---- #}
+    <div id="detail-panel" class="detail-panel is-hidden">
+      <div class="battle-detail-top">
+        <img id="detail-missy-state" class="sl-detail-missy" src="/static/starrlabs/phase2/characters/missy-tablet-analysis.webp" alt="MISSY analyzing this battle">
+        <div id="detail-player-visual" class="battle-detail-player-visual"></div>
+        <div>
+          <div class="battle-detail-eyebrow">POST-MATCH SCOUT</div>
+          <div id="detail-result" class="battle-detail-result">Match</div>
+        </div>
+        <div class="battle-detail-summary">
+          <div id="detail-meta" class="battle-detail-meta"></div>
+          <div id="detail-prediction" class="battle-detail-prediction"></div>
+        </div>
+      </div>
+
+      <div class="battle-detail-layout">
+        <div class="battle-side battle-side--enemies">
+          <div class="battle-side-heading">
+            <div class="battle-side-title enemies">ENEMIES FACED</div>
+            <span class="battle-side-hint">battle-time stats</span>
+          </div>
+          <div id="detail-enemies" class="battle-side-list"></div>
+        </div>
+
+        <div class="battle-map">
+          <div class="battle-map-badges">
+            <span class="badge" id="detail-mode-badge"></span>
+            <span class="badge" id="detail-map-badge"></span>
+            <span class="badge" id="detail-bot-lobby-badge"></span>
+          </div>
+          <img id="detail-map-img" class="battle-map-img" alt="" />
+        </div>
+
+        <div class="battle-side battle-side--yours">
+          <div class="battle-side-title yours">YOUR SQUAD</div>
+          <div id="detail-yours" class="battle-side-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-header page-header--spaced">
+      <h2 class="flush-heading">Matches</h2>
+      <div class="subtitle subtitle--compact">
+        Showing page <strong>{{ page or 1 }}</strong>
+        {% if total_pages %}of <strong>{{ total_pages }}</strong>{% endif %}
+        · 30 per page
+      </div>
+    </div>
+
+    {# ---- PAGINATION BAR (top) ---- #}
+    <div class="pagination-bar">
+      {% set q = request.query_params if request is defined else None %}
+      {% set current_page = page or 1 %}
+      {% set tp = total_pages or None %}
+
+      {# build base query by keeping filters but replacing page #}
+      {% macro page_link(p) -%}
+        {%- set params = {
+          'from_date': from_date,
+          'to_date': to_date,
+          'from_ts': from_ts,
+          'to_ts': to_ts,
+          'mode': mode_filter,
+          'btype': type_filter,
+          'brawler': brawler_filter,
+          'victory_score': 'true' if victory_score_filter else '',
+          'page': p
+        } -%}
+        /battles/{{ tag.lstrip('#') }}?{% for k,v in params.items() if v %}{{k}}={{v|urlencode}}&{% endfor %}page={{p}}
+      {%- endmacro %}
+
+      <a class="nav-link pagination-link{% if current_page <= 1 %} is-disabled{% endif %}"
+         href="{{ page_link((current_page-1) if current_page>1 else 1) }}"
+         {% if current_page <= 1 %}aria-disabled="true"{% endif %}>
+        Prev
+      </a>
+
+      <div class="pagination-pill">
+        Page {{ current_page }}{% if tp %} / {{ tp }}{% endif %}
+      </div>
+
+      <a class="nav-link pagination-link{% if tp and current_page >= tp %} is-disabled{% endif %}"
+         href="{{ page_link(current_page+1) }}"
+         {% if tp and current_page >= tp %}aria-disabled="true"{% endif %}>
+        Next
+      </a>
+    </div>
+
+    {% if not battles %}
+      <p>No battles found for this filter.</p>
+    {% else %}
+      <table class="data-table battles-table">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Result</th>
+            <th>Prediction</th>
+            <th>Mode</th>
+            <th>Map</th>
+            <th>Brawler</th>
+            <th>Trophy change</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in battles %}
+            {% set row_result = (b.result or '').lower() %}
+            {% set pred_prob = b.pred_win_prob %}
+            <tr
+              data-battletime="{{ b.battleTime or b.battletime }}"
+              data-brawler="{{ b.brawler_name or '' }}"
+              data-brawlerimg="{{ b.brawler_model_url or b.brawler_icon or '' }}"
+              data-brawlericon="{{ b.brawler_icon or '' }}"
+              data-predprob="{{ b.pred_win_prob if b.pred_win_prob is not none else '' }}"
+              data-predexplanation="{{ b.pred_explanation_player or '' }}"
+              data-predexplanationjson='{{ (b.pred_explanation or {}) | tojson }}'
+              data-predfreshness="{{ b.prediction_freshness_label }}"
+              data-scoresignal="{{ b.score_result_signal if b.score_result_signal is not none else '' }}"
+            >
+              <td>
+                <span class="battle-time" data-raw="{{ b.battleTime or b.battletime }}" title="{{ b.battleTime or b.battletime }}">
+                  {{ b.battle_time_human or (b.battleTime or b.battletime or '-') }}
+                </span>
+              </td>
+              <td>
+                <span class="
+                  {% if row_result == 'victory' %}result-win
+                  {% elif row_result == 'defeat' %}result-loss
+                  {% elif row_result == 'draw' %}result-draw
+                  {% endif %}
+                ">
+                  {{ b.result or '-' }}
+                </span>
+              </td>
+              <td>
+                {% if pred_prob is not none %}
+                  {% set expected_win = pred_prob >= 0.5 %}
+                  {% set actual_win = row_result == 'victory' %}
+                  <div class="companion-prediction" title="{{ b.pred_explanation_player or 'Validated exact-3v3 Ladder model.' }}">
+                    <span class="companion-model-label">LADDER WIN CHANCE</span>
+                    <strong>{{ (pred_prob * 100) | round(1) }}%</strong>
+                    {% if row_result == 'draw' %}
+                      <span class="companion-outcome companion-outcome--draw">Draw</span>
+                      <small>Probability recorded · no win/loss classification</small>
+                    {% elif actual_win and expected_win %}
+                      <span class="companion-outcome companion-outcome--expected-win">Expected win</span>
+                      <small>The favorite converted</small>
+                    {% elif actual_win and not expected_win %}
+                      <span class="companion-outcome companion-outcome--surprise-win">Surprise win</span>
+                      <small>Won as the underdog</small>
+                    {% elif not actual_win and expected_win %}
+                      <span class="companion-outcome companion-outcome--missed-win">Missed expected win</span>
+                      <small>Favored, but the match was lost</small>
+                    {% else %}
+                      <span class="companion-outcome companion-outcome--expected-loss">Expected loss</span>
+                      <small>The underdog result held</small>
+                    {% endif %}
+                    <div class="prediction-trust-strip">
+                      <span><b>Probability</b>{{ (pred_prob * 100) | round(1) }}%</span>
+                      <span><b>Confidence</b>Not separately estimated</span>
+                      <span><b>Freshness</b>{{ b.prediction_freshness_label }}</span>
+                      {% if b.score_result_signal is not none %}<span class="{% if b.score_result_signal > 0 %}is-positive{% else %}is-negative{% endif %}"><b>Score evidence</b>{% if b.score_result_signal > 0 %}+{% endif %}{{ b.score_result_signal }}</span>{% endif %}
+                    </div>
+                    {% if b.pred_explanation %}
+                      <details class="prediction-why">
+                        <summary>Why this estimate?</summary>
+                        <p>{{ b.pred_explanation.summary }}</p>
+                        <div class="prediction-drivers">
+                          {% for factor in b.pred_explanation.positive_factors[:2] %}
+                            <span class="is-up"><b>↑</b>{{ factor.label }}<small>raised estimate · {{ factor.movement_share_pct or '—' }}% of model movement</small></span>
+                          {% endfor %}
+                          {% for factor in b.pred_explanation.negative_factors[:2] %}
+                            <span class="is-down"><b>↓</b>{{ factor.label }}<small>lowered estimate · {{ factor.movement_share_pct or '—' }}% of model movement</small></span>
+                          {% endfor %}
+                        </div>
+                        <footer>Faithful CatBoost SHAP contributions in model-score space. Explains the estimate—not what caused the result. · {{ b.prediction_model_version }}</footer>
+                      </details>
+                    {% endif %}
+                  </div>
+                {% else %}
+                  <div class="companion-prediction companion-prediction--unsupported">
+                    <span class="companion-model-label">NO MODEL YET</span>
+                    {% if b.mode == 'soloShowdown' %}
+                      <strong>Top-4 pending</strong><small>Solo placement model is collecting evidence</small>
+                    {% elif b.mode == 'duoShowdown' %}
+                      <strong>Top-2 pending</strong><small>Duo placement model is collecting evidence</small>
+                    {% elif b.type == 'soloRanked' %}
+                      <strong>Ranked pending</strong><small>Waiting for honest Ranked ELO history</small>
+                    {% elif (b.type or '')|lower == 'friendly' %}
+                      <strong>Friendly match</strong><small>Practice game · excluded from predictions</small>
+                    {% else %}
+                      <strong>Unsupported context</strong><small>No model for this battle type yet</small>
+                    {% endif %}
+                  </div>
+                {% endif %}
+              </td>
+              <td>
+                <div class="battle-context-badges">
+                  <span class="badge">
+                    {% if b.mode_icon %}
+                      <img src="{{ b.mode_icon }}" alt="">
+                    {% endif %}
+                    {{ b.mode_name or b.mode or '-' }}
+                  </span>
+                  {% if b.type %}
+                    <span class="battle-type-badge{% if (b.type or '')|lower == 'friendly' %} battle-type-badge--friendly{% endif %}">
+                      {% if (b.type or '')|lower == 'friendly' %}Friendly Match
+                      {% elif b.type == 'soloRanked' %}Ranked Match
+                      {% elif b.type == 'teamRanked' %}Team Ranked
+                      {% elif (b.type or '')|lower == 'ranked' %}Trophy Match
+                      {% else %}{{ b.type }}{% endif %}
+                    </span>
+                  {% endif %}
+                </div>
+              </td>
+              <td>
+                {% if b.map_image %}
+                  <span class="badge">
+                    <img src="{{ b.map_image }}" alt="">
+                    {{ b.map_name or b.map }}
+                  </span>
+                {% else %}
+                  {{ b.map_name or b.map or '-' }}
+                {% endif %}
+              </td>
+              <td>
+                <div class="cell-with-icon">
+                  {% if b.brawler_icon %}
+                    <img src="{{ b.brawler_icon }}" alt="" class="brawler-icon">
+                  {% endif %}
+                  <span>{{ b.brawler_name or '-' }}</span>
+                </div>
+              </td>
+              <td>
+                {% if b.trophychange is not none %}
+                  {% if b.trophychange > 0 %}
+                    +{{ b.trophychange }}
+                  {% else %}
+                    {{ b.trophychange }}
+                  {% endif %}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      {# ---- PAGINATION BAR (bottom) ---- #}
+      <div class="pagination-bar pagination-bar--spaced">
+        <a class="nav-link pagination-link{% if current_page <= 1 %} is-disabled{% endif %}"
+           href="{{ page_link((current_page-1) if current_page>1 else 1) }}"
+           {% if current_page <= 1 %}aria-disabled="true"{% endif %}>
+          Prev
+        </a>
+
+        <div class="pagination-pill">
+          Page {{ current_page }}{% if tp %} / {{ tp }}{% endif %}
+        </div>
+
+        <a class="nav-link pagination-link{% if tp and current_page >= tp %} is-disabled{% endif %}"
+           href="{{ page_link(current_page+1) }}"
+           {% if tp and current_page >= tp %}aria-disabled="true"{% endif %}>
+          Next
+        </a>
+      </div>
+    {% endif %}
+
+  </div>
+
+  <script>
+    (function () {
+    const rows = document.querySelectorAll("tbody tr[data-battletime]");
+    document.querySelectorAll("time[data-context-time]").forEach((el) => {
+      const parsed = new Date(el.getAttribute("data-context-time"));
+      if (!Number.isNaN(parsed.getTime())) el.textContent = new Intl.DateTimeFormat(undefined, {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}).format(parsed);
+    });
+    const lensTabs = document.querySelectorAll("[data-lens]");
+    const lensPanels = document.querySelectorAll("[data-lens-panel]");
+    lensTabs.forEach((tab) => tab.addEventListener("click", () => {
+      const target = tab.getAttribute("data-lens");
+      lensTabs.forEach((item) => item.classList.toggle("is-active", item === tab));
+      lensPanels.forEach((panel) => panel.classList.toggle("is-active", panel.getAttribute("data-lens-panel") === target));
+    }));
+    const timeEls = document.querySelectorAll(".battle-time[data-raw]");
+    const filtersForm = document.getElementById("filtersForm");
+    const filterToggle = document.querySelector(".mobile-filter-toggle");
+    if (filterToggle && filtersForm) {
+      filterToggle.addEventListener("click", () => {
+        const open = filtersForm.classList.toggle("is-open");
+        filterToggle.setAttribute("aria-expanded", String(open));
+      });
+    }
+
+    const panel = document.getElementById("detail-panel");
+    const resultEl = document.getElementById("detail-result");
+    const metaEl = document.getElementById("detail-meta");
+    const predictionEl = document.getElementById("detail-prediction");
+
+    function predictionInfo(predProb) {
+      if (predProb === null || predProb === undefined || predProb === "") {
+        return null;
+      }
+      const p = Number(predProb);
+      if (Number.isNaN(p)) return null;
+      if (p < 0.35) return { text: "Prediction: Loss - Strong underdog", shortText: "Loss - Strong underdog", cls: "prediction-badge prediction-badge--loss" };
+      if (p < 0.45) return { text: "Prediction: Loss - Underdog", shortText: "Loss - Underdog", cls: "prediction-badge prediction-badge--loss" };
+      if (p < 0.55) return { text: "Prediction: Even", shortText: "Even", cls: "prediction-badge prediction-badge--even" };
+      if (p < 0.65) return { text: "Prediction: Win - Favored", shortText: "Win - Favored", cls: "prediction-badge prediction-badge--win" };
+      return { text: "Prediction: Win - Strongly favored", shortText: "Win - Strongly favored", cls: "prediction-badge prediction-badge--win" };
+    }
+
+    function formatLocalBattleTime(raw) {
+      if (!raw) return "-";
+      const cleaned = String(raw).replace(".000Z", "Z");
+      const base = cleaned.replace(
+        /(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})/,
+        "$1-$2-$3T$4:$5:$6"
+      );
+      const iso = base.endsWith("Z") ? base : `${base}Z`;
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return raw;
+      return new Intl.DateTimeFormat(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(d);
+    }
+
+    timeEls.forEach((el) => {
+      const raw = el.getAttribute("data-raw");
+      const formatted = formatLocalBattleTime(raw);
+      el.textContent = formatted;
+    });
+
+    function toUtcIsoStart(dateStr) {
+      if (!dateStr) return "";
+      const parts = dateStr.split("-").map(Number);
+      if (parts.length !== 3 || parts.some((n) => Number.isNaN(n))) return "";
+      const [y, m, d] = parts;
+      const local = new Date(y, m - 1, d, 0, 0, 0, 0);
+      return local.toISOString();
+    }
+
+    function toUtcIsoEnd(dateStr) {
+      if (!dateStr) return "";
+      const parts = dateStr.split("-").map(Number);
+      if (parts.length !== 3 || parts.some((n) => Number.isNaN(n))) return "";
+      const [y, m, d] = parts;
+      const local = new Date(y, m - 1, d + 1, 0, 0, 0, 0);
+      return local.toISOString();
+    }
+
+    function ensureHiddenInput(form, name) {
+      let input = form.querySelector(`input[name="${name}"]`);
+      if (!input) {
+        input = document.createElement("input");
+        input.type = "hidden";
+        input.name = name;
+        form.appendChild(input);
+      }
+      return input;
+    }
+
+    function localDateString(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      const d = String(date.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+
+    function ensureBrowserLocalBounds() {
+      if (!filtersForm) return false;
+      const url = new URL(window.location.href);
+      if (url.searchParams.get("from_ts") && url.searchParams.get("to_ts")) return false;
+
+      const fromInput = filtersForm.querySelector('input[name="from_date"]');
+      const toInput = filtersForm.querySelector('input[name="to_date"]');
+      const browserToday = new Date();
+
+      // With no explicit dates, establish the default range in the viewer's
+      // calendar rather than the server's. Explicit dates are also converted
+      // using the browser's own DST-aware midnight boundaries.
+      if (!url.searchParams.get("from_date") || !url.searchParams.get("to_date")) {
+        const browserFrom = new Date(
+          browserToday.getFullYear(),
+          browserToday.getMonth(),
+          browserToday.getDate() - {{ 30 if victory_score_filter else 7 }}
+        );
+        fromInput.value = localDateString(browserFrom);
+        toInput.value = localDateString(browserToday);
+      }
+
+      url.searchParams.set("from_date", fromInput.value);
+      url.searchParams.set("to_date", toInput.value);
+      url.searchParams.set("from_ts", toUtcIsoStart(fromInput.value));
+      url.searchParams.set("to_ts", toUtcIsoEnd(toInput.value));
+      url.searchParams.set("page", "1");
+      window.location.replace(url.toString());
+      return true;
+    }
+
+    function syncUtcBounds() {
+      const fromVal = filtersForm.querySelector('input[name="from_date"]')?.value || "";
+      const toVal = filtersForm.querySelector('input[name="to_date"]')?.value || "";
+      const fromTsInput = ensureHiddenInput(filtersForm, "from_ts");
+      const toTsInput = ensureHiddenInput(filtersForm, "to_ts");
+
+      if (fromVal && toVal) {
+        fromTsInput.value = toUtcIsoStart(fromVal);
+        toTsInput.value = toUtcIsoEnd(toVal);
+      } else {
+        fromTsInput.value = "";
+        toTsInput.value = "";
+      }
+    }
+
+    if (filtersForm) {
+      if (ensureBrowserLocalBounds()) return;
+      syncUtcBounds();
+      filtersForm
+        .querySelectorAll('input[name="from_date"], input[name="to_date"]')
+        .forEach((el) => el.addEventListener("change", syncUtcBounds));
+      filtersForm.addEventListener("submit", () => {
+        syncUtcBounds();
+      });
+      filtersForm.addEventListener("input", syncUtcBounds);
+      window.addEventListener("load", syncUtcBounds);
+    }
+
+    let lastVisibilityRefresh = Date.now();
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden && Date.now() - lastVisibilityRefresh > 60000) {
+        sessionStorage.setItem(`bsa-scroll:${location.pathname}${location.search}`, String(scrollY));
+        window.location.reload();
+      }
+    });
+
+    const yoursEl = document.getElementById("detail-yours");
+    const enemiesEl = document.getElementById("detail-enemies");
+
+    const modeBadge = document.getElementById("detail-mode-badge");
+    const mapBadge = document.getElementById("detail-map-badge");
+    const botLobbyBadge = document.getElementById("detail-bot-lobby-badge");
+    const mapImg = document.getElementById("detail-map-img");
+
+    // hero swapping
+    const heroImage = document.getElementById("heroImage");
+    const brawlerSelect = document.getElementById("brawlerFilter");
+    const PLAYER_ICON = "{{ player_icon_url or '' }}";
+    const FALLBACK_IMG = "/static/models/default.png";
+
+    // keep original tag (with #) for comparison; also build cleaned tag for URL
+    const trackedTagRaw = "{{ tag }}";
+    const trackedTag = trackedTagRaw.toUpperCase();
+    const trackedTagForUrl = trackedTagRaw.replaceAll("#", "");
+    const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, ch => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    })[ch]);
+
+    // helper: try to get brawler image from option[data-model] OR from table row data-brawlerimg
+    function setHeroImageForSelection() {
+      const selected = (brawlerSelect?.value || "").trim();
+      if (!selected) {
+        heroImage.src = PLAYER_ICON || FALLBACK_IMG;
+        heroImage.alt = "Player image";
+        return;
+      }
+
+      // 1) best: option has data-model
+      const opt = brawlerSelect.querySelector(`option[value="${CSS.escape(selected)}"]`);
+      const model = opt?.getAttribute("data-model");
+      if (model) {
+        heroImage.src = model;
+        heroImage.alt = `${selected} image`;
+        return;
+      }
+
+      // 2) fallback: find first row that matches brawler and use row data
+      for (const r of rows) {
+        const br = (r.getAttribute("data-brawler") || "").trim();
+        if (br && br === selected) {
+          const img = r.getAttribute("data-brawlerimg");
+          if (img) {
+            heroImage.src = img;
+            heroImage.alt = `${selected} image`;
+            return;
+          }
+        }
+      }
+
+      heroImage.src = PLAYER_ICON || FALLBACK_IMG;
+      heroImage.alt = "Player image";
+    }
+
+    function renderPlayerRow(p, relationship) {
+      const isTracked = (p.player_tag || "").toUpperCase() === trackedTag;
+      const isStar = !!(p.is_starplayer ?? p.is_starPlayer);
+      const hasPreFightSnapshot = !!p.profile_captured_at;
+      const hasCurrentProfile = !!p.current_profile_captured_at;
+      const useCurrent = !hasPreFightSnapshot && hasCurrentProfile;
+      const iconId = useCurrent ? p.current_icon_id : p.snapshot_icon_id;
+      const profileIcon = iconId
+        ? `https://cdn.brawlify.com/profile-icons/regular/${iconId}.png`
+        : "";
+      const brawlerTrophies = p.brawler_trophies ?? p.snapshot_brawler_trophies;
+      const power = p.brawler_power ?? p.snapshot_brawler_power;
+      const prestige = useCurrent ? p.current_brawler_prestige_level : p.snapshot_brawler_prestige_level;
+      const streak = useCurrent ? p.current_brawler_win_streak : p.snapshot_brawler_win_streak;
+      const maxStreak = useCurrent ? p.current_brawler_max_win_streak : p.snapshot_brawler_max_win_streak;
+      const brawlerRank = useCurrent ? p.current_brawler_rank : p.snapshot_brawler_rank;
+      const highestBrawlerTrophies = useCurrent ? p.current_brawler_highest_trophies : p.snapshot_brawler_highest_trophies;
+      const accountTrophies = (useCurrent ? p.current_profile_trophies : p.snapshot_profile_trophies) ?? p.player_total_trophies;
+      const hasSnapshot = hasPreFightSnapshot || hasCurrentProfile;
+      const relationLabel = isTracked ? "YOU" : (relationship === "enemy" ? "ENEMY" : "ALLY");
+      const arrayCount = (value) => Array.isArray(value) ? value.length : 0;
+      const skin = useCurrent ? p.current_brawler_skin : p.snapshot_brawler_skin;
+      const skinName = skin?.name || skin?.id || "";
+      const starPowers = useCurrent ? p.current_star_powers : p.snapshot_star_powers;
+      const gadgets = useCurrent ? p.current_gadgets : p.snapshot_gadgets;
+      const gears = useCurrent ? p.current_gears : p.snapshot_gears;
+      const hypercharges = useCurrent ? p.current_hypercharges : p.snapshot_hypercharges;
+      const loadout = [
+        arrayCount(starPowers) ? `${arrayCount(starPowers)} SP` : "",
+        arrayCount(gadgets) ? `${arrayCount(gadgets)} gadgets` : "",
+        arrayCount(gears) ? `${arrayCount(gears)} gears` : "",
+        arrayCount(hypercharges) ? `${arrayCount(hypercharges)} HC` : "",
+      ].filter(Boolean).join(" · ");
+      const profileAge = Number(p.profile_age_at_battle_seconds);
+      const profileAgeLabel = Number.isFinite(profileAge)
+        ? (profileAge < 3600 ? `${Math.max(1, Math.round(profileAge / 60))}m before` : `${Math.round(profileAge / 3600)}h before`)
+        : "at fight";
+      // Brawlify's PNG name is a milestone tier ID, not Supercell's raw
+      // prestigeLevel value. Derive it from the brawler's locked-in highest
+      // trophy milestone so a player cannot visually regress after a reset.
+      const prestigeTierForTrophies = (value) => {
+        const trophies = Math.max(0, Number(value) || 0);
+        if (trophies < 250) return 0; // Wood
+        if (trophies < 500) return 1; // Bronze
+        if (trophies < 750) return 2; // Silver
+        if (trophies < 1000) return 3; // Gold
+        return Math.min(13, 4 + Math.floor((trophies - 1000) / 1000));
+      };
+      const prestigeTrophySource = highestBrawlerTrophies ?? brawlerTrophies;
+      const prestigeTier = prestigeTierForTrophies(prestigeTrophySource);
+      const brawlerId = Number(p.brawler_id);
+      const prestigeNames = [
+        "Wood", "Bronze", "Silver", "Gold",
+        "Prestige 1", "Prestige 2", "Prestige 3", "Prestige 4", "Prestige 5",
+        "Prestige 6", "Prestige 7", "Prestige 8", "Prestige 9", "Prestige 10",
+      ];
+      const prestigeName = prestigeNames[prestigeTier];
+      const brawlerPrestigeUrl = Number.isInteger(brawlerId) && brawlerId > 0
+        ? `https://cdn.brawlify.com/prestiges/brawlers/${brawlerId}/${prestigeTier}.png`
+        : `https://cdn.brawlify.com/prestiges/regular/${prestigeTier}.png`;
+      const prestigeBadge = prestigeTrophySource !== null && prestigeTrophySource !== undefined
+        ? `<span class="scout-prestige scout-prestige--brawler" data-prestige-tier="${prestigeTier}" data-prestige-trophies="${Number(prestigeTrophySource) || 0}" title="${p.brawler_name || "Brawler"} · ${prestigeName}">
+             <img src="${brawlerPrestigeUrl}" alt="${p.brawler_name || "Brawler"} ${prestigeName} badge" onerror="this.src='https://cdn.brawlify.com/prestiges/regular/${prestigeTier}.png';this.onerror=null">
+             <small>${prestigeName}</small>
+           </span>`
+        : "";
+      const rankedName = useCurrent ? p.current_ranked_rank_name : p.snapshot_ranked_rank_name;
+      const rankedElo = useCurrent ? p.current_ranked_elo : p.snapshot_ranked_elo;
+      const rankedLabel = rankedName || (rankedElo ? `${rankedElo} ELO` : "");
+      const accountPrestige = useCurrent ? p.current_account_prestige : p.snapshot_account_prestige;
+      const victories3v3 = useCurrent ? p.current_victories_3v3 : p.snapshot_victories_3v3;
+      const clubName = useCurrent ? p.current_club_name : p.snapshot_club_name;
+      const sameMapCount = Number(p.encounters_same_map || 0);
+      const totalEncounterCount = Number(p.encounters_total || 0);
+      const encounterLabel = totalEncounterCount === 1 ? "First meeting" : `Seen ${totalEncounterCount}×`;
+      const identityKind = p.identity_kind || "unknown";
+      const identityLabel = p.identity_label || "Unknown";
+      const identityReason = p.identity_reason || "There is not enough evidence to classify this participant safely.";
+      const identityIcon = identityKind === "account-found" ? "●" : identityKind === "bot" ? "✶" : identityKind === "likely-bot" ? "?" : "·";
+
+      return `
+        <article class="scout-player ${isTracked ? "is-you" : ""} ${isStar ? "is-star" : ""} ${relationship === "enemy" ? "is-enemy" : ""}">
+          ${relationship === "enemy" ? `<span class="scout-identity scout-identity--${identityKind}" data-identity-kind="${identityKind}" title="${identityReason}" aria-label="${identityLabel}: ${identityReason}"><b>${identityIcon}</b>${identityLabel}</span>` : ""}
+          <div class="scout-player-art">
+            ${p.brawler_emoji_url ? `<img src="${p.brawler_emoji_url}" alt="${p.brawler_name || "Brawler"}" class="scout-brawler-icon">` : ""}
+            ${profileIcon ? `<img src="${profileIcon}" alt="" class="scout-profile-icon" onerror="this.remove()">` : ""}
+          </div>
+          <div class="scout-player-copy">
+            <div class="scout-player-topline">
+              <span class="scout-relation">${relationLabel}</span>
+              ${isStar ? `<img src="/static/star_player.png" alt="Star Player" title="Star Player" class="scout-star">` : ""}
+              <strong>${p.player_name || p.player_tag}</strong>
+            </div>
+            <div class="scout-brawler-name">${p.brawler_name || "Unknown brawler"}</div>
+            <div class="scout-stat-row">
+              <span><b>${power ?? "–"}</b> Power</span>
+              <span><b>${brawlerTrophies ?? "–"}</b> 🏆</span>
+              <span><b>${accountTrophies ?? "–"}</b> Total</span>
+              ${!isTracked ? `<span class="scout-encounter scout-encounter--total" title="Meetings recorded through this battle"><b>${encounterLabel}</b></span>` : ""}
+              ${!isTracked && sameMapCount > 1 ? `<span class="scout-encounter" title="Meetings on this map through this battle"><b>${sameMapCount}×</b> this map</span>` : ""}
+            </div>
+            ${hasSnapshot ? `
+              <div class="scout-profile-intel">
+                ${prestigeBadge}
+                <div class="scout-intel-grid">
+                  ${brawlerRank !== null && brawlerRank !== undefined ? `<span><small>Brawler rank</small><b>${brawlerRank}</b></span>` : ""}
+                  ${streak !== null && streak !== undefined ? `<span><small>Win streak</small><b>${streak}${maxStreak !== null && maxStreak !== undefined ? ` / ${maxStreak}` : ""}</b></span>` : ""}
+                  ${highestBrawlerTrophies !== null && highestBrawlerTrophies !== undefined ? `<span><small>Best trophies</small><b>${highestBrawlerTrophies}</b></span>` : ""}
+                  ${rankedLabel ? `<span><small>Ranked</small><b>${rankedLabel}</b></span>` : ""}
+                  ${accountPrestige !== null && accountPrestige !== undefined ? `<span><small>Account prestige</small><b>${accountPrestige}</b></span>` : ""}
+                  ${victories3v3 !== null && victories3v3 !== undefined ? `<span><small>3v3 wins</small><b>${victories3v3}</b></span>` : ""}
+                </div>
+              </div>
+              ${(skinName || loadout || clubName) ? `<div class="scout-loadout">${skinName ? `<span>🎨 ${skinName}</span>` : ""}${loadout ? `<span>⚙ ${loadout}</span>` : ""}${clubName ? `<span>🛡 ${clubName}</span>` : ""}</div>` : ""}
+              <div class="scout-intel-row"><span class="${useCurrent ? "intel-current" : "intel-known"}">${useCurrent ? "Current scout · fetched after fight" : `Snapshot ${profileAgeLabel}`}</span></div>
+            ` : `<div class="scout-intel-row"><span class="intel-battle-only">Battle data only</span></div>`}
+          </div>
+        </article>
+      `;
+    }
+
+
+    function renderBattleDetail(data) {
+      const parts = data.participants || [];
+      if (!parts.length) {
+        panel.style.display = "block";
+        resultEl.textContent = "No details available";
+        resultEl.className = "battle-detail-result";
+        metaEl.textContent = "";
+        yoursEl.innerHTML = "";
+        enemiesEl.innerHTML = "";
+        modeBadge.textContent = "";
+        mapBadge.textContent = "";
+        botLobbyBadge.textContent = "";
+        mapImg.removeAttribute("src");
+        mapImg.style.display = "none";
+        return;
+      }
+
+      const first = parts[0];
+
+      const selectedRow = document.querySelector('tbody tr.is-selected');
+      const selectedBrawler = selectedRow?.getAttribute("data-brawler") || "Brawler";
+      const selectedBrawlerImg = selectedRow?.getAttribute("data-brawlerimg") || FALLBACK_IMG;
+      const selectedBrawlerIcon = selectedRow?.getAttribute("data-brawlericon") || "";
+      const selectedBrawlerArt = matchMedia("(max-width: 760px), (max-height: 500px) and (orientation: landscape)").matches
+        ? (selectedBrawlerIcon || selectedBrawlerImg)
+        : selectedBrawlerImg;
+      const detailPlayerVisual = document.getElementById("detail-player-visual");
+      const hasSpecificBrawlerArt = selectedBrawlerArt && !selectedBrawlerArt.includes("/static/models/default.png");
+      const safeBrawler = escapeHtml(selectedBrawler);
+      const brawlerFallbackMarkup = `<div class="battle-detail-brawler-fallback" aria-label="${safeBrawler} art unavailable"><span aria-hidden="true">★</span><strong>${safeBrawler}</strong><small>SCOUT ID</small></div>`;
+      if (detailPlayerVisual) {
+        detailPlayerVisual.innerHTML = "";
+        detailPlayerVisual.classList.toggle("is-fallback", !hasSpecificBrawlerArt);
+        if (hasSpecificBrawlerArt) {
+          heroImage.onerror = () => {
+            heroImage.onerror = null;
+            detailPlayerVisual.classList.add("is-fallback");
+            detailPlayerVisual.innerHTML = brawlerFallbackMarkup;
+          };
+          heroImage.src = selectedBrawlerArt;
+          heroImage.alt = `${selectedBrawler} image`;
+          detailPlayerVisual.appendChild(heroImage);
+        } else {
+          detailPlayerVisual.innerHTML = brawlerFallbackMarkup;
+        }
+      }
+
+      const mapName  = first.map_name || first.map || "Unknown map";
+      const modeName = first.mode_name || first.mode || "Unknown mode";
+      const rawType = first.type || "";
+      const typeName = ({
+        friendly: "Friendly Match",
+        soloranked: "Ranked Match",
+        teamranked: "Team Ranked",
+        ranked: "Trophy Match"
+      })[String(rawType).toLowerCase()] || rawType;
+      const timeVal =
+        first.battle_time_human ||
+        first.battleTime ||
+        first.battletime ||
+        "";
+
+      const predProb = selectedRow?.getAttribute('data-predprob') || "";
+      const predExplanation = selectedRow?.getAttribute('data-predexplanation') || "";
+      let predExplanationData = {};
+      try { predExplanationData = JSON.parse(selectedRow?.getAttribute('data-predexplanationjson') || "{}"); } catch (_) {}
+      const predInfo = predictionInfo(predProb);
+      const predFreshness = selectedRow?.getAttribute('data-predfreshness') || 'Not available';
+      const scoreSignalRaw = selectedRow?.getAttribute('data-scoresignal') || '';
+      const scoreSignal = scoreSignalRaw === '' ? null : Number(scoreSignalRaw);
+
+      // decide main result label (based on tracked player)
+      const you = parts.find(p => (p.player_tag || "").toUpperCase() === trackedTag);
+      const youRes = (you?.result || "").toLowerCase();
+      let resultText = "MATCH";
+      let resultClass = "";
+      if (youRes === "victory") { resultText = "VICTORY"; resultClass = "result-win"; }
+      else if (youRes === "defeat") { resultText = "DEFEAT"; resultClass = "result-loss"; }
+      else if (youRes === "draw") { resultText = "DRAW"; resultClass = "result-draw"; }
+
+      const missyState = document.getElementById("detail-missy-state");
+      if (missyState) {
+        missyState.src = youRes === "victory"
+          ? "/static/starrlabs/phase2/characters/missy-victory-celebration.webp"
+          : (youRes === "defeat" || !predInfo)
+            ? "/static/starrlabs/phase2/characters/missy-tablet-concerned.webp"
+            : "/static/starrlabs/phase2/characters/missy-tablet-analysis.webp";
+      }
+
+      panel.style.display = "block";
+      resultEl.textContent = resultText;
+      resultEl.className = "battle-detail-result " + resultClass;
+
+      const metaParts = [
+        `${modeName} · ${mapName}${typeName ? " · " + typeName : ""}`,
+        timeVal || ""
+      ];
+      metaEl.textContent = metaParts.filter(Boolean).join(" · ");
+      metaEl.title = predExplanation || "";
+      const detailFactors = [...(predExplanationData.positive_factors || []).slice(0, 2), ...(predExplanationData.negative_factors || []).slice(0, 2)];
+      const detailWhy = detailFactors.length ? `<div class="detail-model-why"><b>WHY ${Math.round(Number(predProb) * 100)}%?</b>${detailFactors.map(f => `<span class="${f.direction === 'raised' ? 'is-up' : 'is-down'}">${f.direction === 'raised' ? '↑' : '↓'} ${f.label}<small>${f.direction} estimate · ${f.movement_share_pct ?? '—'}% of model movement</small></span>`).join('')}<small>Faithful CatBoost SHAP contribution · model behavior, not cause of result · ${predExplanationData.model_version || ''}</small></div>` : '';
+      const trustReadout = predInfo ? `<div class="detail-trust-readout"><span><b>Probability</b>${Math.round(Number(predProb) * 100)}%</span><span><b>Confidence</b>Not separately estimated</span><span><b>Freshness</b>${predFreshness}</span>${scoreSignal === null ? '' : `<span class="${scoreSignal > 0 ? 'is-positive' : 'is-negative'}"><b>Score evidence</b>${scoreSignal > 0 ? '+' : ''}${scoreSignal.toFixed(2)}</span>`}</div>` : '';
+      predictionEl.innerHTML = predInfo
+        ? `<span class="${predInfo.cls}">${Math.round(Number(predProb) * 100)}% · ${predInfo.shortText}</span>${trustReadout}${detailWhy}`
+        : `<span class="prediction-badge prediction-badge--none">No prediction</span>`;
+
+      // badges + map image
+      modeBadge.innerHTML = `${first.mode_icon ? `<img src="${first.mode_icon}" alt="">` : ""}${modeName}`;
+      mapBadge.innerHTML = `${first.map_image ? `<img src="${first.map_image}" alt="">` : ""}${mapName}`;
+      const lobbyDetection = data.bot_lobby_detection || {label: "unsure", bot_signal_count: 0, participant_count: 0};
+      const lobbyLabels = {bots: "Bots", humans: "Humans", mixed: "Mixed", unsure: "Unsure"};
+      botLobbyBadge.textContent = `Control: ${lobbyLabels[lobbyDetection.label] || "Unsure"}`;
+      botLobbyBadge.title = `${Number(lobbyDetection.bot_signal_count || 0)} of ${Number(lobbyDetection.participant_count || 0)} opponents have a deterministic bot signal. Post-battle evidence only.`;
+
+      const mapSrc = first.map_image || "";
+      if (mapSrc) {
+        mapImg.src = mapSrc;
+        mapImg.alt = mapName;
+        mapImg.style.display = "block";
+      } else {
+        mapImg.removeAttribute("src");
+        mapImg.style.display = "none";
+      }
+
+      // Prefer explicit team_index. Legacy rows fall back to result relative to the tracked player.
+      const yourTeamIndex = you?.team_index;
+      const yourResult = (you?.result || "").toLowerCase();
+      const normalizedMode = String(first.mode || "").toLowerCase();
+      const isSoloShowdown = normalizedMode.includes("soloshowdown");
+      const isDuoShowdown = normalizedMode.includes("duoshowdown");
+      const yourSquad = parts.filter((p) => {
+        if (yourTeamIndex !== null && yourTeamIndex !== undefined && p.team_index !== null && p.team_index !== undefined) {
+          return p.team_index === yourTeamIndex;
+        }
+        if (isSoloShowdown) return (p.player_tag || "").toUpperCase() === trackedTag;
+        if (isDuoShowdown) return p.rank === you?.rank;
+        return (p.result || "").toLowerCase() === yourResult;
+      });
+      const enemies = parts.filter((p) => !yourSquad.includes(p));
+      yoursEl.innerHTML = yourSquad.length ? yourSquad.map((p) => renderPlayerRow(p, "ally")).join("") : `<div class="muted">No squad data</div>`;
+      enemiesEl.innerHTML = enemies.length ? enemies.map((p) => renderPlayerRow(p, "enemy")).join("") : `<div class="muted">No opponent data for this mode</div>`;
+
+      function scrollPanelToTop() {
+        const headerOffset = 110; // match your fixed top-nav + body padding
+        const y = panel.getBoundingClientRect().top + window.scrollY - headerOffset;
+        window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+      }
+
+      requestAnimationFrame(() => requestAnimationFrame(scrollPanelToTop));
+
+    }
+
+    rows.forEach(row => {
+      row.addEventListener("click", () => {
+        const bt = row.getAttribute("data-battletime");
+
+        rows.forEach(r => r.classList.remove("is-selected"));
+        row.classList.add("is-selected");
+
+        panel.style.display = "block";
+        resultEl.textContent = "LOADING…";
+        resultEl.className = "battle-detail-result";
+        metaEl.textContent = "";
+        yoursEl.innerHTML = "";
+        enemiesEl.innerHTML = "";
+        modeBadge.textContent = "";
+        mapBadge.textContent = "";
+        mapImg.removeAttribute("src");
+        mapImg.style.display = "none";
+
+        if (!bt) {
+          console.error("Missing data-battletime on row", row);
+          resultEl.textContent = "MISSING BATTLE TIME";
+          return;
+        }
+
+        const url = `/api/battles/${encodeURIComponent(trackedTagForUrl)}/${encodeURIComponent(bt)}`;
+
+        fetch(url)
+          .then(async (r) => {
+            const text = await r.text();
+            if (!r.ok) throw new Error(`HTTP ${r.status}: ${text}`);
+            try { return JSON.parse(text); } catch { return {}; }
+          })
+          .then(renderBattleDetail)
+          .catch(err => {
+            console.error("Failed to load battle detail", err);
+            resultEl.textContent = "FAILED TO LOAD";
+            metaEl.textContent = "";
+            yoursEl.innerHTML = "";
+            enemiesEl.innerHTML = "";
+          });
+      });
+    });
+
+    // reset page to 1 when changing filters (so pagination doesn't break)
+    if (filtersForm) {
+      filtersForm.addEventListener("change", () => {
+        const pageInput = filtersForm.querySelector('input[name="page"]');
+        if (pageInput) pageInput.value = "1";
+        setHeroImageForSelection();
+      });
+    }
+
+    brawlerSelect?.addEventListener("change", setHeroImageForSelection);
+    setHeroImageForSelection();
+
+    // Battle detail intentionally stays closed until the player selects a row.
+    })();
+  </script>
+</body>
+</html>

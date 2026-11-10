@@ -1,0 +1,22 @@
+[
+  {
+    "package": "chart.js",
+    "version": "4.5.1",
+    "tarball": "https://registry.npmjs.org/chart.js/-/chart.js-4.5.1.tgz",
+    "integrity": "sha512-GIjfiT9dbmHRiYi6Nl2yFCq7kkwdkp1W/lp2J99rX0yo9tgJGn3lKQATztIjb5tVtevcBtIdICNWqlq5+E8/Pw==",
+    "file": "chart.min.js",
+    "sha256": "48444a82d4edcb5bec0f1965faacdde18d9c17db3063d042abada2f705c9f54a",
+    "licenseFile": "chart.js-LICENSE.txt",
+    "license": "MIT (upstream attribution retained)"
+  },
+  {
+    "package": "chartjs-plugin-datalabels",
+    "version": "2.2.0",
+    "tarball": "https://registry.npmjs.org/chartjs-plugin-datalabels/-/chartjs-plugin-datalabels-2.2.0.tgz",
+    "integrity": "sha512-14ZU30lH7n89oq+A4bWaJPnAG8a7ZTk7dKf48YAzMvJjQtjrgg5Dpk9f+LbjCF6bpx3RAGTeL13IXpKQYyRvlw==",
+    "file": "chartjs-plugin-datalabels.min.js",
+    "sha256": "20c08f3d9c6d2ef76df6d6a6f1127c0013339fe32add24222276c398c6308c38",
+    "licenseFile": "chartjs-plugin-datalabels-LICENSE.txt",
+    "license": "MIT (upstream attribution retained)"
+  }
+]

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#09152e">
+  <title>Topple The Tower — Live Event Observatory · StarrLabs</title>
+  <link rel="icon" type="image/png" href="/static/favicon.ico">
+  <link rel="stylesheet" href="/static/styles/main.css?v=home-score-v2-1">
+  <link rel="stylesheet" href="/static/styles/starrlabs.css?v=phase2-2">
+  <link rel="stylesheet" href="/static/styles/event.css?v=brawler-results-1">
+  {% include "partials/analytics.html" %}
+</head>
+<body class="page-event">
+  {% include "partials/top_nav.html" %}
+
+  <main class="event-shell">
+    <header class="event-hero event-hero--topple">
+      <div class="event-hero-copy">
+        <div class="event-live-line">
+          <span class="event-live-dot" aria-hidden="true"></span>
+          <span>{% if event.is_today %}LIVE OBSERVATION{% else %}ARCHIVED OBSERVATION{% endif %}</span>
+          <time datetime="{{ event.selected_date_iso }}">{{ event.selected_date.strftime('%B %-d, %Y') }}</time>
+        </div>
+        <span class="event-kicker">RAMEN REBELLION // SEASON 2: WINDSTOCK</span>
+        <h1><span>TOPPLE</span><em>THE TOWER</em></h1>
+        <p>Live field analytics for the official five-floor climb. Track who entered, how far players advanced, which picks survived, and the floors that stopped them.</p>
+        <div class="event-rule-chips" aria-label="Topple The Tower rules">
+          <span><b>MAX</b> Powers enabled</span>
+          <span><b>8</b> one-use picks</span>
+          <span><b>5</b> floors to clear</span>
+        </div>
+      </div>
+
+      <div class="event-hero-side">
+        <img
+          class="event-official-tower"
+          src="/static/starrlabs/neutral-emblem.svg"
+          alt=""
+          aria-hidden="true"
+        >
+        <div class="event-date-console" aria-label="Select observation date">
+          <span>OBSERVATION WINDOW</span>
+          <strong>{{ event.selected_date.strftime('%a · %b %-d') }}</strong>
+          <small>12:00 AM–11:59 PM · {{ event.timezone_label }}</small>
+          <div>
+            <a href="/event?date={{ event.previous_date }}" aria-label="Previous day">←</a>
+            <a class="event-today-link" href="/event?date={{ event.today_date }}">Today</a>
+            {% if event.is_today %}
+              <span class="is-disabled" aria-hidden="true">→</span>
+            {% else %}
+              <a href="/event?date={{ event.next_date }}" aria-label="Next day">→</a>
+            {% endif %}
+          </div>
+          {% if event.latest_observation %}
+            <footer>Last battle observed <time class="js-local-time" datetime="{{ event.latest_observation.isoformat() }}">{{ event.latest_observation.strftime('%-I:%M %p CT') }}</time></footer>
+          {% else %}
+            <footer>No recognized event battles yet.</footer>
+          {% endif %}
+        </div>
+      </div>
+    </header>
+
+    <section class="event-scoreboard" aria-label="Event summary">
+      <article class="event-kpi event-kpi--players">
+        <span>PLAYERS OBSERVED</span>
+        <strong>{{ event.summary.players }}</strong>
+        <small>{{ event.summary.started_today }} began Floor 1 today</small>
+      </article>
+      <article>
+        <span>EVENT BATTLES</span>
+        <strong>{{ event.summary.attempts }}</strong>
+        <small>{{ event.summary.wins }} wins · {{ event.summary.losses }} losses{% if event.summary.draws %} · {{ event.summary.draws }} draws{% endif %}</small>
+      </article>
+      <article>
+        <span>FIELD WIN RATE</span>
+        <strong>{{ event.summary.win_rate if event.summary.win_rate is not none else '—' }}{% if event.summary.win_rate is not none %}%{% endif %}</strong>
+        <small>Across recognized attempts today</small>
+      </article>
+      <article class="event-kpi--clear">
+        <span>FULL CLEARS</span>
+        <strong>{{ event.summary.completed }}</strong>
+        <small>{{ event.summary.completion_rate if event.summary.completion_rate is not none else '—' }}{% if event.summary.completion_rate is not none %}%{% endif %} of observed players</small>
+      </article>
+      <article class="event-kpi--perfect">
+        <span>PERFECT RUNS</span>
+        <strong>{{ event.summary.perfect }}</strong>
+        <small>No losses across all five floors</small>
+      </article>
+    </section>
+
+    <section class="event-section event-tower" aria-labelledby="tower-title">
+      <div class="event-section-head">
+        <div>
+          <span>PROGRESSION FUNNEL</span>
+          <h2 id="tower-title">Climb data, floor by floor</h2>
+        </div>
+        <p>Reach counts use each recognized player’s full run; win rates use battles observed during the selected day.</p>
+      </div>
+
+      <div class="event-stage-grid">
+        {% for stage in event.stages %}
+          <article class="event-stage-card" style="--stage: {{ stage.number }}">
+            <div class="event-stage-map">
+              {% if stage.image_url %}<img src="{{ stage.image_url }}" alt="{{ stage.map }} map preview" loading="lazy">{% endif %}
+              <span>FLOOR {{ stage.number }}</span>
+              <b>{{ stage.mode }}</b>
+            </div>
+            <div class="event-stage-copy">
+              <h3>{{ stage.map }}</h3>
+              <div class="event-stage-funnel">
+                <span><b>{{ stage.reached_players }}</b><small>reached</small></span>
+                <i aria-hidden="true">→</i>
+                <span><b>{{ stage.cleared_players }}</b><small>cleared</small></span>
+              </div>
+              <div class="event-stage-rate">
+                <div><span style="width: {{ stage.win_rate or 0 }}%"></span></div>
+                <strong>{{ stage.win_rate if stage.win_rate is not none else '—' }}{% if stage.win_rate is not none %}%{% endif %}</strong>
+                <small>{{ stage.wins }}W · {{ stage.losses }}L · {{ stage.attempts }} attempts</small>
+              </div>
+              {% if stage.top_brawlers %}
+                <div class="event-stage-picks">
+                  <span>TOP RESULTS</span>
+                  <div class="event-stage-pick-grid">
+                    {% for brawler in stage.top_brawlers %}
+                      <article class="event-brawler-result" aria-label="{{ brawler.name|title }}: {{ brawler.win_rate }} percent win rate across {{ brawler.attempts }} battles" title="{{ brawler.name|title }} · {{ brawler.wins }} wins in {{ brawler.attempts }} battles">
+                        <span class="event-brawler-rank" aria-hidden="true">{{ loop.index }}</span>
+                        <figure>
+                          {% if brawler.image_url %}
+                            <img src="{{ brawler.image_url }}" alt="{{ brawler.name|title }}" loading="lazy">
+                          {% else %}
+                            <span class="event-brawler-fallback" aria-hidden="true">?</span>
+                          {% endif %}
+                        </figure>
+                        <div>
+                          <strong>{{ brawler.win_rate if brawler.win_rate is not none else '—' }}{% if brawler.win_rate is not none %}%{% endif %}</strong>
+                          <small>{{ brawler.attempts }} battle{% if brawler.attempts != 1 %}s{% endif %}</small>
+                        </div>
+                      </article>
+                    {% endfor %}
+                  </div>
+                </div>
+              {% else %}
+                <div class="event-stage-picks event-stage-picks--empty">No observed attempts today</div>
+              {% endif %}
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="event-grid">
+      <article class="event-panel event-field-panel">
+        <div class="event-section-head">
+          <div>
+            <span>PLAYER PROGRESS</span>
+            <h2>The field</h2>
+          </div>
+          <div class="event-status-legend">
+            <b>{{ event.summary.active }} climbing</b>
+            <b>{{ event.summary.completed }} complete</b>
+            <b>{{ event.summary.eliminated }} out of picks</b>
+          </div>
+        </div>
+
+        {% if event.players %}
+          <div class="event-player-list">
+            {% for player in event.players %}
+              <a class="event-player-row {% if player.completed %}is-complete{% elif player.eliminated %}is-out{% endif %}" href="/battles/{{ player.tag_path }}">
+                <span class="event-player-rank">{{ loop.index }}</span>
+                <span class="event-player-name"><strong>{{ player.name }}</strong><small>{{ player.tag }}</small></span>
+                <span class="event-mini-track" aria-label="{{ player.cleared_stages }} of 5 floors cleared">
+                  {% for floor in range(1, 6) %}<i class="{% if player.cleared_stages >= floor %}is-cleared{% elif player.current_stage == floor %}is-current{% endif %}"></i>{% endfor %}
+                </span>
+                <span class="event-player-record"><strong>{{ player.wins }}–{{ player.losses }}</strong><small>{{ player.attempts }} picks used</small></span>
+                <span class="event-player-state">
+                  {% if player.perfect %}<b>PERFECT</b>{% elif player.completed %}<b>CLEARED</b>{% elif player.eliminated %}<b>RUN OVER</b>{% else %}<b>{{ player.state|upper }}</b>{% endif %}
+                  <small>{% if player.completed %}All five floors{% elif player.eliminated %}No picks remain{% else %}{{ player.remaining_picks }} picks left{% endif %}</small>
+                </span>
+              </a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="event-empty">
+            <strong>Waiting for the first climb.</strong>
+            <p>StarrLabs has not recognized an ordered event run for this date yet.</p>
+          </div>
+        {% endif %}
+      </article>
+
+      <aside class="event-panel event-method-panel">
+        <span class="event-panel-number">08</span>
+        <span class="event-method-kicker">TOWER PROTOCOL</span>
+        <h2>How the Tower works</h2>
+        <p>Supercell’s rules define the climb. StarrLabs validates those mechanics because the public battle API does not provide an event-run ID:</p>
+        <ol>
+          <li><b>Maxed with Powers</b><span>Every brawler enters maxed out with event Powers enabled.</span></li>
+          <li><b>Win to climb</b><span>Clear each map to reach the next floor and its reward.</span></li>
+          <li><b>One attempt each</b><span>Every brawler is a one-use pick until the Tower resets.</span></li>
+          <li><b>Perfect at the top</b><span>Reach Floor 5 without a loss to earn the Perfect Run reward.</span></li>
+        </ol>
+        <footer>
+          <span>This is a live StarrLabs sample, not the worldwide event population.</span>
+          <a href="https://support.supercell.com/brawl-stars/en/articles/the-ramen-rebellion.html" target="_blank" rel="noopener noreferrer">Official rules ↗</a>
+          <a href="https://fankit.supercell.com/d/YvtsWV4pUQVm/game-assets?q=Tower" target="_blank" rel="noopener noreferrer">Supercell FanKit ↗</a>
+        </footer>
+      </aside>
+    </section>
+
+    <section class="event-panel event-invite-panel" aria-labelledby="event-invite-title">
+      <div class="event-invite-copy">
+        <span class="event-method-kicker">SHARE THE CLIMB</span>
+        <h2 id="event-invite-title">Bring another player into the observatory</h2>
+        <p>Share the link to open today’s Topple The Tower results. A larger StarrLabs sample makes every floor and brawler metric more useful.</p>
+        <div class="event-invite-actions">
+          <button id="event-share-button" type="button">Share event</button>
+          <button id="event-copy-button" type="button" data-share-url="/event">Copy link</button>
+          <span id="event-copy-status" role="status" aria-live="polite"></span>
+        </div>
+      </div>
+    </section>
+
+    <footer class="event-legal">
+      <span>Game names and trademarks belong to Supercell; displayed neutral artwork is original.</span>
+      <span>This unofficial fan site is not endorsed by Supercell. See <a href="https://supercell.com/en/fan-content-policy/" target="_blank" rel="noopener noreferrer">Supercell’s Fan Content Policy</a>.</span>
+    </footer>
+  </main>
+
+  <script>
+    document.querySelectorAll('.js-local-time').forEach((node) => {
+      const instant = new Date(node.dateTime);
+      if (!Number.isNaN(instant.valueOf())) {
+        node.textContent = instant.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      }
+    });
+
+    const eventShareUrl = new URL('/event', window.location.origin).href;
+    const eventShareButton = document.getElementById('event-share-button');
+    const eventCopyButton = document.getElementById('event-copy-button');
+    const eventCopyStatus = document.getElementById('event-copy-status');
+
+    const copyEventLink = async () => {
+      try {
+        await navigator.clipboard.writeText(eventShareUrl);
+        eventCopyStatus.textContent = 'Link copied';
+      } catch (error) {
+        window.prompt('Copy this event link:', eventShareUrl);
+        eventCopyStatus.textContent = 'Link ready';
+      }
+      window.setTimeout(() => { eventCopyStatus.textContent = ''; }, 2500);
+    };
+
+    eventCopyButton?.addEventListener('click', copyEventLink);
+    eventShareButton?.addEventListener('click', async () => {
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: 'Topple The Tower · StarrLabs',
+            text: 'Follow today’s Topple The Tower event results live on StarrLabs.',
+            url: eventShareUrl,
+          });
+          return;
+        } catch (error) {
+          if (error.name === 'AbortError') return;
+        }
+      }
+      await copyEventLink();
+    });
+
+    {% if event.is_today %}
+      let remaining = 90;
+      const label = document.querySelector('.event-date-console footer');
+      window.setInterval(() => {
+        remaining -= 1;
+        if (remaining <= 0) window.location.reload();
+        if (label) label.dataset.refresh = `Refresh in ${remaining}s`;
+      }, 1000);
+    {% endif %}
+  </script>
+</body>
+</html>

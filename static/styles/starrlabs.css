@@ -1,0 +1,885 @@
+/* StarrLabs — Phase 2 character and laboratory component system */
+:root {
+  /* Typography roles. Keep role names stable even if a face changes later. */
+  --font-display: "Lilita One", sans-serif;
+  --font-body: "Trebuchet MS", "Avenir Next", sans-serif;
+  --font-label: system-ui, sans-serif;
+  --font-instrument: ui-monospace, "Cascadia Mono", "SFMono-Regular", Menlo, monospace;
+  --font-weight-regular: 400;
+  --font-weight-semibold: 650;
+  --font-weight-bold: 700;
+  --font-weight-heavy: 900;
+  --line-height-tight: 1;
+  --line-height-body: 1.4;
+  --line-height-relaxed: 1.55;
+  --tracking-display: .025em;
+  --tracking-label: .12em;
+  --tracking-instrument: .1em;
+
+  /* Brand primitives. */
+  --sl-ink: #171629;
+  --sl-navy: #11152e;
+  --sl-purple: #241744;
+  --sl-teal: #1fa7a8;
+  --sl-teal-deep: #116b78;
+  --sl-cream: #f4e7c5;
+  --sl-cream-bright: #fff7df;
+  --sl-pink: #f04d8a;
+  --sl-gold: #f4c542;
+  --sl-success: #55d99c;
+  --sl-danger: #ff727d;
+  --sl-warning: #f4c542;
+  --sl-info: #66ccff;
+
+  /* Semantic surfaces. */
+  --surface-canvas: var(--sl-navy);
+  --surface-paper: var(--sl-cream-bright);
+  --surface-screen: var(--sl-navy);
+  --surface-screen-raised: #152946;
+  --surface-screen-inset: #092343;
+
+  /* Semantic text. */
+  --text-primary: var(--sl-ink);
+  --text-on-dark: #edf7ff;
+  --text-muted: #5f718a;
+  --text-body-muted: #554d59;
+  --text-screen-primary: #ffffff;
+  --text-screen-secondary: #a9c1da;
+  --text-screen-muted: #8faccc;
+  --text-screen-faint: #7896b4;
+
+  /* Semantic borders and actions. */
+  --line-strong: var(--sl-ink);
+  --line-screen: #315f8b;
+  --action-primary: var(--sl-pink);
+  --action-primary-text: var(--sl-ink);
+  --action-primary-hover: #ff70a6;
+  --action-focus-ring: rgba(240, 77, 138, .28);
+
+  /* Charts and data series. */
+  --chart-grid: rgba(49, 95, 139, .55);
+  --chart-series-1: var(--sl-teal);
+  --chart-series-2: var(--sl-pink);
+  --chart-series-3: var(--sl-gold);
+  --chart-series-4: var(--sl-info);
+  --chart-series-positive: var(--sl-success);
+  --chart-series-negative: var(--sl-danger);
+
+  /* Compatibility aliases used by the legacy stylesheet. */
+  --title-fill: var(--sl-gold);
+  --title-fill-deep: #e59f1d;
+  --outline-ink: var(--sl-ink);
+  --btn-blue: var(--action-primary);
+  --btn-blue-hover: var(--action-primary-hover);
+  --btn-border: var(--sl-ink);
+}
+
+/* Passwordless identity clearance */
+.page-email-auth {
+  min-height: 100vh;
+  background: var(--surface-canvas);
+  color: var(--text-primary);
+}
+
+.email-auth-shell {
+  width: min(920px, calc(100% - 28px));
+  margin: clamp(42px, 9vh, 96px) auto 110px;
+}
+
+.email-auth-card {
+  display: grid;
+  grid-template-columns: minmax(190px, .72fr) minmax(300px, 1.28fr);
+  overflow: hidden;
+  border: 5px solid var(--line-strong);
+  border-radius: 26px;
+  background: var(--surface-paper);
+  box-shadow: 0 16px 0 rgba(5, 13, 29, .82), 0 28px 60px rgba(3, 11, 28, .36);
+}
+
+.email-auth-signal {
+  position: relative;
+  display: grid;
+  min-height: 500px;
+  place-items: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(94, 231, 226, .24), transparent 32%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 2px, transparent 2px 7px),
+    var(--surface-screen);
+  border-right: 5px solid var(--line-strong);
+}
+
+.email-auth-signal img { position: relative; z-index: 2; width: min(62%, 190px); filter: drop-shadow(0 12px 22px rgba(0,0,0,.45)); }
+.email-auth-signal-ring { position: absolute; width: 250px; aspect-ratio: 1; border: 3px solid var(--sl-teal); border-radius: 50%; box-shadow: 0 0 0 18px rgba(94,231,226,.08), 0 0 45px rgba(94,231,226,.28); }
+.email-auth-signal-ring::before,.email-auth-signal-ring::after { content:""; position:absolute; inset:28px; border:2px dashed var(--sl-gold); border-radius:50%; }
+.email-auth-signal-ring::after { inset:58px; border-style:solid; opacity:.55; }
+
+.email-auth-copy { padding: clamp(30px, 5vw, 58px); color: var(--text-primary); }
+.email-auth-eyebrow { display:block; margin-bottom:8px; color:var(--sl-pink); font-family:var(--font-label); font-size:12px; font-weight:var(--font-weight-bold); letter-spacing:var(--tracking-label); }
+.email-auth-copy h1 { margin:0; color:var(--text-primary); font-family:var(--font-display); font-size:clamp(34px,5vw,54px); line-height:.98; }
+.email-auth-copy > p { margin:18px 0 26px; color:var(--text-muted); font-size:16px; line-height:1.55; }
+.email-auth-form { display:grid; gap:11px; }
+.email-auth-form[hidden] { display:none !important; }
+.email-auth-form label { font-family:var(--font-label); font-size:12px; font-weight:var(--font-weight-bold); letter-spacing:var(--tracking-label); text-transform:uppercase; }
+.email-auth-form input { width:100%; box-sizing:border-box; border:3px solid var(--line-strong); border-radius:11px; background:#fffdf4; color:var(--text-primary); font:700 17px/1.2 var(--font-body); padding:15px 16px; outline:none; }
+.email-auth-form input:focus { border-color:var(--sl-teal); box-shadow:0 0 0 4px rgba(16,160,157,.18); }
+.email-auth-form .cf-turnstile { width:100%; min-height:65px; }
+.email-auth-code { text-align:center; font-family:var(--font-instrument)!important; font-size:32px!important; letter-spacing:10px; }
+.email-auth-primary,.email-auth-secondary { min-height:50px; border:3px solid var(--line-strong); border-radius:11px; font-family:var(--font-display); font-size:18px; letter-spacing:.6px; cursor:pointer; }
+.email-auth-primary { background:var(--sl-pink); color:var(--action-primary-text); box-shadow:0 5px 0 var(--line-strong); }
+.email-auth-secondary { background:transparent; color:var(--text-primary); }
+.email-auth-primary:disabled { opacity:.58; cursor:wait; }
+.email-auth-status { min-height:22px; margin-top:18px; color:var(--text-muted); font-size:14px; line-height:1.45; }
+.email-auth-trust { display:flex; flex-wrap:wrap; gap:8px 14px; margin-top:22px; padding-top:18px; border-top:2px solid rgba(23,22,41,.22); color:#17664b; font-family:var(--font-label); font-size:11px; font-weight:var(--font-weight-bold); letter-spacing:.4px; }
+
+@media (max-width: 700px) {
+  .email-auth-shell { margin-top:24px; }
+  .email-auth-card { grid-template-columns:1fr; }
+  .email-auth-signal { min-height:175px; border-right:0; border-bottom:5px solid var(--line-strong); }
+  .email-auth-signal img { width:96px; }
+  .email-auth-signal-ring { width:145px; }
+  .email-auth-copy { padding:28px 22px 32px; }
+}
+
+body { font-family: var(--font-display); }
+p, li, label, input, select, textarea, .subtitle, .card-subtext { font-family: var(--font-body); }
+.onboarding-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 18px;padding:0;list-style:none}.onboarding-steps li{display:grid;grid-template-columns:28px 1fr;gap:8px;align-items:start;padding:9px;border:2px solid var(--sl-ink);border-radius:10px;background:var(--sl-cream-bright)}.onboarding-steps li>b{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--sl-teal);color:var(--sl-ink);box-shadow:0 2px 0 var(--sl-ink)}.onboarding-steps span,.onboarding-steps strong,.onboarding-steps small{display:block}.onboarding-steps strong{color:var(--sl-ink);font-family:var(--font-display)}.onboarding-steps small{margin-top:3px;color:var(--text-muted);font:700 .62rem/1.3 var(--font-body)}
+
+.session-console,
+.relationship-console {
+  margin: 22px 0;
+  padding: 18px;
+  border: 3px solid var(--line-strong);
+  border-radius: 18px;
+  background: var(--surface-screen) url("/static/starrlabs/crt-glass.webp");
+  box-shadow: 0 6px 0 var(--sl-teal-deep);
+  color: var(--text-on-dark);
+}
+.companion-window-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.session-console-head,.relationship-head{display:flex;align-items:flex-start;justify-content:space-between;gap:22px}
+.session-console-head span,.relationship-head span,.session-kpis span{color:var(--sl-info);font:900 .62rem/1 var(--font-instrument);letter-spacing:.13em}
+.session-console h2,.relationship-console h2{margin:5px 0 0;color:var(--sl-gold);font:1.8rem/1 var(--font-display);text-shadow:0 3px 0 #020a18}
+.streak-chip{min-width:130px;padding:9px 12px;border:2px solid var(--sl-warning);border-radius:11px;background:var(--surface-screen-raised);text-align:right}.streak-chip small,.streak-chip strong{display:block}.streak-chip small{color:#8eb8e5;font:800 .52rem/1 var(--font-instrument);letter-spacing:.1em}.streak-chip strong{margin-top:5px;color:var(--sl-warning)}.streak-chip--win{border-color:var(--sl-success)}.streak-chip--win strong{color:var(--sl-success)}.streak-chip--loss{border-color:var(--sl-danger)}.streak-chip--loss strong{color:var(--sl-danger)}
+.session-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:15px}.session-kpis article{padding:12px;border:1px solid var(--line-screen);border-radius:11px;background:rgba(255,255,255,.06)}.session-kpis strong,.session-kpis small{display:block}.session-kpis strong{margin:7px 0 4px;color:var(--text-screen-primary);font-size:1.45rem}.session-kpis small{color:#9db4cb;font:700 .63rem/1.35 var(--font-body)}
+.session-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.session-strip article{padding:9px 10px;border-left:4px solid var(--sl-teal);background:var(--surface-screen-inset)}.session-strip time,.session-strip small{display:block;color:var(--text-screen-muted);font:700 .58rem/1.3 var(--font-instrument)}.session-strip strong{display:block;margin:4px 0;color:var(--text-screen-primary)}
+.relationship-head p{max-width:500px;margin:0;color:var(--text-screen-secondary);font:700 .72rem/1.4 var(--font-body)}.relationship-columns{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:15px}.relationship-columns>div{display:grid;gap:6px}.relationship-columns>div>b{color:var(--sl-gold);font:900 .58rem/1 var(--font-instrument);letter-spacing:.1em}.relationship-person{display:grid;grid-template-columns:1fr auto;gap:3px 8px;padding:9px 10px;border:1px solid var(--line-screen);border-radius:9px;background:var(--surface-screen-inset);color:#e7f3ff}.relationship-person strong{color:var(--sl-success)}.relationship-person small{grid-column:1/-1;color:var(--text-screen-muted);font:650 .58rem/1.25 var(--font-instrument)}.relationship-console footer{margin-top:12px;color:var(--text-screen-faint);font:650 .58rem/1.35 var(--font-instrument)}
+@media(max-width:900px){.companion-window-grid{grid-template-columns:1fr}}
+@media(max-width:760px){.onboarding-steps{grid-template-columns:1fr}.session-console-head,.relationship-head{display:grid}.streak-chip{text-align:left}.session-kpis,.session-strip,.relationship-columns{grid-template-columns:1fr}.session-console h2,.relationship-console h2{font-size:1.45rem}}
+
+html { background: var(--sl-navy); }
+
+body {
+  background-color: var(--sl-navy);
+  background-image:
+    linear-gradient(rgba(8, 10, 30, .14), rgba(8, 10, 30, .3)),
+    url("/static/starrlabs/lab-desktop.webp");
+  background-size: cover;
+  background-position: center top;
+  background-attachment: fixed;
+}
+
+body::before {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  content: "";
+  background: radial-gradient(circle at 50% 18%, rgba(39, 60, 119, .18), transparent 46%);
+}
+
+.top-nav {
+  border-bottom: 3px solid var(--sl-ink);
+  background:
+    linear-gradient(180deg, rgba(34, 177, 177, .95), rgba(13, 100, 112, .97)),
+    url("/static/starrlabs/teal-metal.webp");
+  box-shadow: 0 5px 0 rgba(23, 22, 41, .92), 0 11px 24px rgba(0, 0, 0, .38);
+}
+
+.top-nav-inner { min-height: 72px; }
+
+.nav-brand {
+  display: inline-grid;
+  grid-template-columns: 54px auto;
+  grid-template-rows: auto auto;
+  column-gap: 10px;
+  align-items: center;
+  color: var(--sl-cream-bright);
+  text-decoration: none !important;
+}
+
+.nav-brand::before {
+  grid-row: 1 / 3;
+  width: 52px;
+  aspect-ratio: 1;
+  content: "";
+  background: url("/static/starrlabs/emblem.png") center / contain no-repeat;
+  filter: drop-shadow(0 3px 0 var(--sl-ink));
+}
+
+.brand-starrlabs {
+  align-self: end;
+  font-size: 1.7rem;
+  line-height: .88;
+  letter-spacing: .025em;
+  text-transform: uppercase;
+  color: var(--sl-gold);
+  text-shadow: -2px 2px 0 var(--sl-ink), 0 0 12px rgba(244, 197, 66, .38);
+}
+
+.brand-division {
+  align-self: start;
+  margin-top: 5px;
+  color: var(--sl-cream);
+  font: 800 .52rem/1 var(--font-label);
+  letter-spacing: .17em;
+}
+
+.nav-link {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  color: var(--sl-cream-bright) !important;
+  text-shadow: 0 2px 0 var(--sl-ink);
+}
+
+.nav-link:hover,
+.nav-link.active {
+  border-color: var(--sl-ink);
+  background: var(--sl-pink);
+  color: var(--action-primary-text) !important;
+  box-shadow: 0 3px 0 var(--sl-ink);
+  text-shadow: none;
+  text-decoration: none;
+}
+
+.content-card,
+.account-welcome-card {
+  position: relative;
+  border: 4px solid var(--sl-ink);
+  border-radius: 22px;
+  background-color: var(--sl-cream);
+  background-image: url("/static/starrlabs/cream-enamel.webp");
+  box-shadow:
+    0 0 0 5px var(--sl-teal),
+    0 0 0 9px var(--sl-ink),
+    0 14px 0 var(--sl-ink),
+    0 28px 42px rgba(0, 0, 0, .52);
+  color: var(--sl-ink);
+}
+
+.content-card::before {
+  position: absolute;
+  inset: 9px;
+  z-index: 0;
+  border: 1px solid rgba(23, 22, 41, .18);
+  border-radius: 13px;
+  pointer-events: none;
+  content: "";
+}
+
+.content-card > * { position: relative; z-index: 1; }
+
+.page-title,
+.player-head-name,
+.perf-title,
+.section-heading {
+  color: var(--sl-ink);
+  text-shadow: 2px 2px 0 rgba(244, 197, 66, .72);
+}
+
+.subtitle,
+.card-subtext { color: var(--text-body-muted); }
+
+.player-head-card,
+.performance-card--wide,
+.filters-box,
+.account-summary,
+.status-banner,
+.performance-lenses {
+  border-color: var(--sl-ink) !important;
+  background-color: var(--sl-cream-bright) !important;
+  background-image: url("/static/starrlabs/cream-enamel.webp") !important;
+  box-shadow: 0 5px 0 var(--sl-ink) !important;
+}
+
+.player-head-card::before,
+.performance-card--wide::before {
+  display: block;
+  width: max-content;
+  margin: -8px 0 10px;
+  border: 2px solid var(--sl-ink);
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: var(--sl-teal);
+  color: var(--sl-cream-bright);
+  font: 900 .58rem/1 var(--font-label);
+  letter-spacing: .12em;
+  text-shadow: 0 1px 0 var(--sl-ink);
+  content: "STARRLABS // ACTIVE TERMINAL";
+}
+
+.performance-card--wide::before { content: "RESEARCH READOUT"; }
+.page-battles .performance-card--wide::before { content: "BATTLE OBSERVATION"; }
+
+.kpi-card {
+  overflow: hidden;
+  border: 2px solid var(--sl-ink) !important;
+  background: var(--sl-cream-bright) !important;
+  box-shadow: 0 4px 0 rgba(23, 22, 41, .85) !important;
+}
+
+.kpi-card::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 34px;
+  height: 7px;
+  border-left: 2px solid var(--sl-ink);
+  border-bottom: 2px solid var(--sl-ink);
+  background: var(--sl-pink);
+  content: "";
+}
+
+.kpi-label { color: var(--sl-teal-deep) !important; letter-spacing: .08em; }
+.kpi-value { color: var(--sl-ink) !important; }
+
+.chart-wrap,
+.companion-summary,
+.context-deck,
+.detail-panel,
+.battle-detail {
+  border-color: var(--sl-ink) !important;
+  background-color: var(--sl-navy) !important;
+  background-image: url("/static/starrlabs/crt-glass.webp") !important;
+  box-shadow: inset 0 0 36px rgba(19, 185, 187, .08), 0 5px 0 var(--sl-ink) !important;
+}
+
+button,
+.battles-link,
+.club-link,
+.follow-pill {
+  border-color: var(--sl-ink);
+  background: var(--sl-pink);
+  color: var(--action-primary-text);
+  box-shadow: -4px 5px 0 var(--sl-ink);
+}
+
+button:hover,
+.battles-link:hover,
+.club-link:hover,
+.follow-pill:hover { background: var(--action-primary-hover); }
+
+input[type="text"],
+input[type="date"],
+select {
+  border: 2px solid var(--sl-ink) !important;
+  background: var(--sl-cream-bright) !important;
+  color: var(--sl-ink) !important;
+  box-shadow: inset 0 -3px 0 rgba(17, 107, 120, .12);
+}
+
+input:focus,
+select:focus {
+  border-color: var(--sl-pink) !important;
+  box-shadow: 0 0 0 3px var(--action-focus-ring) !important;
+}
+
+table { border-color: var(--sl-ink) !important; }
+thead th {
+  background: var(--sl-teal-deep) !important;
+  color: var(--sl-cream-bright) !important;
+  text-shadow: 0 2px 0 var(--sl-ink);
+}
+tbody tr:nth-child(even) { background: rgba(31, 167, 168, .08); }
+
+.battle-context-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.battle-type-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 3px 8px;
+  border: 1px solid #6b7d98;
+  border-radius: 999px;
+  background: #eef3f8;
+  color: #334863;
+  font-size: .67rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.battle-type-badge--friendly {
+  border-color: #d49012;
+  background: linear-gradient(180deg, #fff2ad, #ffd45a);
+  box-shadow: 0 2px 0 #9b6500;
+  color: #5d3a00;
+}
+
+@media (max-width: 760px) {
+  .page-battles .battle-context-badges {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .page-battles .battle-type-badge {
+    min-height: 22px;
+    font-size: .62rem;
+  }
+}
+
+.back-link,
+.info-link,
+.verify-profile-link { color: var(--sl-teal-deep); }
+
+.mobile-nav {
+  border-top: 3px solid var(--sl-ink);
+  background: linear-gradient(180deg, var(--sl-teal-deep), #0a414c);
+  box-shadow: 0 -5px 0 rgba(23, 22, 41, .86);
+}
+
+.mobile-nav-item { color: var(--sl-cream) !important; }
+.mobile-nav-item.active { color: var(--sl-ink) !important; }
+.mobile-nav-icon { border-color: var(--sl-cream) !important; background: var(--sl-purple) !important; }
+
+.account-welcome-art {
+  border-color: var(--sl-ink);
+  background: radial-gradient(circle, rgba(244,197,66,.2), transparent 62%), var(--sl-navy);
+}
+.account-welcome-art img { content: normal; }
+.account-welcome-eyebrow,
+.account-summary-label { color: var(--sl-teal-deep); }
+
+/* Phase 2 hero staging */
+.account-welcome-art {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 430px;
+  background:
+    radial-gradient(circle at 48% 40%, rgba(38, 218, 215, .2), transparent 42%),
+    linear-gradient(155deg, rgba(17, 21, 46, .98), rgba(36, 23, 68, .97));
+}
+.account-welcome-art::before {
+  position: absolute;
+  inset: 18px;
+  z-index: -1;
+  border: 3px solid var(--sl-teal);
+  border-radius: 18px;
+  background: url("/static/starrlabs/crt-glass.webp");
+  box-shadow: inset 0 0 35px rgba(31, 167, 168, .2);
+  content: "";
+}
+.sl-welcome-missy {
+  position: absolute;
+  left: 50%;
+  bottom: 1%;
+  z-index: 2;
+  width: 66% !important;
+  max-height: 94%;
+  object-fit: contain;
+  object-position: bottom center;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 12px 0 rgba(0,0,0,.3)) !important;
+}
+
+/* MISSY laboratory guide */
+.sl-guide {
+  position: relative;
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr) 42px;
+  align-items: center;
+  gap: 17px;
+  overflow: hidden;
+  margin: 18px 0;
+  min-height: 112px;
+  border: 3px solid var(--sl-ink);
+  border-radius: 18px;
+  padding: 10px 16px 10px 8px;
+  background: linear-gradient(100deg, #102c42, var(--sl-navy) 62%, var(--sl-purple));
+  box-shadow: 0 5px 0 var(--sl-ink);
+  color: var(--sl-cream-bright);
+}
+.sl-guide::after {
+  position: absolute;
+  right: 62px;
+  bottom: -13px;
+  width: 310px;
+  height: 70px;
+  opacity: .38;
+  background: url("/static/starrlabs/phase2/ui-kit/pipe-straight-teal.png") right bottom / contain no-repeat;
+  content: "";
+}
+.sl-guide > img { align-self: end; width: 108px; max-height: 135px; object-fit: contain; object-position: bottom; filter: drop-shadow(0 5px 0 rgba(0,0,0,.25)); }
+.sl-guide > div { position: relative; z-index: 1; }
+.sl-guide span { color: #67ebe7; font: 900 .62rem/1 var(--font-label); letter-spacing: .16em; }
+.sl-guide strong { display: block; margin: 6px 0 4px; color: var(--sl-gold); font-size: 1.35rem; line-height: 1; }
+.sl-guide p { max-width: 720px; margin: 0; color: #bdd2d6; font: 700 .72rem/1.45 var(--font-label); }
+.sl-guide > i { z-index: 1; width: 38px; aspect-ratio: 1; background: url("/static/starrlabs/phase2/ui-kit/status-light-green.png") center / contain no-repeat; filter: drop-shadow(0 0 8px rgba(65,255,132,.6)); }
+
+/* Component-kit detailing */
+.performance-card--wide,
+.performance-lenses,
+.detail-panel { position: relative; overflow: hidden; }
+.performance-card--wide::after,
+.performance-lenses::after,
+.detail-panel::after {
+  position: absolute;
+  right: 8px;
+  bottom: 7px;
+  z-index: 3;
+  width: 58px;
+  height: 58px;
+  pointer-events: none;
+  background: url("/static/starrlabs/phase2/ui-kit/panel-bracket-teal.png") right bottom / contain no-repeat;
+  content: "";
+}
+.perf-title::after {
+  display: inline-block;
+  width: 26px;
+  aspect-ratio: 1;
+  margin-left: 8px;
+  vertical-align: middle;
+  background: url("/static/starrlabs/phase2/ui-kit/indicator-button-pink.png") center / contain no-repeat;
+  content: "";
+}
+
+/* Profile prediction presenter */
+.companion-summary { position: relative; padding-right: clamp(145px, 19vw, 245px) !important; }
+.sl-companion-missy {
+  position: absolute;
+  right: 8px;
+  bottom: 0;
+  z-index: 0;
+  width: clamp(138px, 18vw, 235px);
+  max-height: 92%;
+  object-fit: contain;
+  object-position: bottom right;
+  filter: drop-shadow(-8px 8px 0 rgba(0,0,0,.25));
+}
+.companion-summary > :not(.sl-companion-missy) { position: relative; z-index: 1; }
+
+/* Battle-detail state presenter */
+.sl-detail-missy {
+  flex: 0 0 auto;
+  align-self: flex-end;
+  width: clamp(72px, 9vw, 112px);
+  max-height: 132px;
+  object-fit: contain;
+  object-position: bottom;
+  filter: drop-shadow(0 6px 0 rgba(0,0,0,.28));
+}
+.detail-panel { border-top: 7px solid transparent !important; border-image: url("/static/starrlabs/phase2/ui-kit/hazard-stripe-bar.png") 25 round !important; }
+
+/* Battle report is a CRT readout: every top-line value must remain luminous. */
+.detail-panel .battle-detail-eyebrow { color: #72eeea; }
+.detail-panel .battle-detail-meta { color: #d3e2e8; }
+.detail-panel .battle-detail-result.result-win { color: #68e5a7; }
+.detail-panel .battle-detail-result.result-loss { color: #ff7d8e; }
+.detail-panel .battle-detail-result.result-draw { color: var(--sl-gold); }
+.detail-panel .battle-map {
+  padding: 12px;
+  border: 1px solid rgba(31,167,168,.52);
+  border-radius: 15px;
+  background: rgba(5, 14, 35, .58);
+}
+.detail-panel .battle-map .badge {
+  min-height: 34px;
+  box-sizing: border-box;
+  border: 2px solid var(--sl-teal);
+  background: var(--sl-cream-bright);
+  color: var(--sl-ink);
+  font-weight: 900;
+  box-shadow: 0 3px 0 var(--sl-ink);
+}
+.battle-detail-brawler-fallback {
+  display: grid;
+  width: 100%;
+  min-height: 96px;
+  place-items: center;
+  align-content: center;
+  border: 2px solid var(--sl-teal);
+  border-radius: 17px;
+  background: radial-gradient(circle at 50% 30%, rgba(31,167,168,.28), transparent 55%), var(--sl-purple);
+  color: var(--sl-cream-bright);
+  box-shadow: inset 0 0 20px rgba(31,167,168,.12), 0 4px 0 var(--sl-ink);
+  text-align: center;
+}
+.battle-detail-brawler-fallback span { color: var(--sl-gold); font-size: 1.55rem; line-height: 1; }
+.battle-detail-brawler-fallback strong { max-width: 100%; overflow: hidden; font-size: .82rem; text-overflow: ellipsis; white-space: nowrap; }
+.battle-detail-brawler-fallback small { color: #70deda; font: 900 .42rem/1 var(--font-label); letter-spacing: .14em; }
+
+@media (max-width: 760px), (max-height: 500px) and (orientation: landscape) {
+  body {
+    background-image:
+      linear-gradient(rgba(8, 10, 30, .1), rgba(8, 10, 30, .25)),
+      url("/static/starrlabs/lab-mobile.webp");
+    background-size: cover;
+    background-position: center top;
+    background-attachment: scroll;
+  }
+  .top-nav-inner { min-height: 60px; }
+  .nav-brand { grid-template-columns: 40px auto; column-gap: 7px; }
+  .nav-brand::before { width: 38px; }
+  .brand-starrlabs { font-size: 1.2rem; }
+  .brand-division { font-size: .39rem; margin-top: 3px; }
+  .content-card {
+    border-width: 3px;
+    border-radius: 14px;
+    box-shadow: 0 0 0 3px var(--sl-teal), 0 0 0 6px var(--sl-ink), 0 8px 0 var(--sl-ink) !important;
+  }
+  .account-welcome-art { min-height: 235px; }
+  .account-welcome-art::before { inset: 10px; }
+  .sl-welcome-missy { width: 52% !important; max-height: 92%; }
+  .sl-guide { grid-template-columns: 72px minmax(0,1fr) 30px; gap: 9px; min-height: 82px; margin: 12px 0; padding: 7px 9px 7px 4px; }
+  .sl-guide > img { width: 72px; max-height: 96px; }
+  .sl-guide strong { font-size: 1rem; }
+  .sl-guide p { font-size: .62rem; }
+  .sl-guide > i { width: 28px; }
+  .companion-summary { padding-right: 18px !important; padding-bottom: 130px !important; }
+  .sl-companion-missy { right: 4px; width: 126px; max-height: 145px; opacity: .94; }
+  .sl-detail-missy { width: 62px; max-height: 82px; }
+  .player-head-card::before,
+  .performance-card--wide::before { margin-top: -3px; font-size: .48rem; }
+}
+
+@media (max-width: 620px) and (orientation: portrait) {
+  .page-battles .detail-panel { padding: 18px 16px; }
+  .page-battles .battle-detail-top {
+    position: relative;
+    display: grid;
+    grid-template-columns: 104px minmax(0, 1fr);
+    grid-template-areas:
+      "brawler result"
+      "summary summary";
+    align-items: center;
+    gap: 14px 16px;
+    min-height: 128px;
+    padding-right: 76px;
+  }
+  .page-battles .sl-detail-missy {
+    position: absolute;
+    top: -8px;
+    right: -7px;
+    width: 88px;
+    max-height: 126px;
+  }
+  .page-battles .battle-detail-player-visual {
+    grid-area: brawler;
+    width: 104px;
+    min-height: 112px;
+  }
+  .page-battles .battle-detail-player-visual .player-hero-img {
+    width: 104px !important;
+    height: 112px !important;
+    max-height: 112px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    object-fit: contain;
+    filter: drop-shadow(0 6px 0 rgba(0,0,0,.25));
+  }
+  .page-battles .battle-detail-top > div:nth-of-type(2) { grid-area: result; min-width: 0; }
+  .page-battles .battle-detail-summary {
+    grid-area: summary;
+    min-width: 0;
+    align-items: flex-start;
+    padding: 12px;
+    border: 1px solid rgba(31,167,168,.52);
+    border-radius: 12px;
+    background: rgba(5, 14, 35, .56);
+  }
+  .page-battles .battle-detail-result { font-size: 1.8rem; line-height: 1; }
+  .page-battles .battle-detail-meta { font-size: .82rem; line-height: 1.38; text-align: left; }
+  .page-battles .battle-detail-prediction { width: 100%; }
+  .page-battles .battle-detail-prediction .prediction-badge { box-sizing: border-box; min-height: 34px; align-items: center; }
+  .page-battles .battle-detail-brawler-fallback { min-height: 104px; }
+}
+
+/* Mobile filter drawer: one compact trigger, one contained instrument panel. */
+@media (max-width: 760px), (max-height: 500px) and (orientation: landscape) {
+  .page-battles .player-head-right {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 9px;
+  }
+  .page-battles .mobile-filter-toggle {
+    width: 100%;
+    min-height: 48px !important;
+    flex: 0 0 48px;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0;
+    padding: 0 15px;
+    border: 2px solid var(--sl-ink);
+    border-radius: 12px;
+    background: var(--sl-pink);
+    box-shadow: 0 4px 0 var(--sl-ink);
+    text-align: left;
+  }
+  .page-battles .mobile-filter-toggle::after {
+    display: grid;
+    width: 25px;
+    height: 25px;
+    place-items: center;
+    border: 2px solid var(--sl-ink);
+    border-radius: 50%;
+    background: var(--sl-cream-bright);
+    color: var(--sl-ink);
+    content: "+";
+    font: 900 1rem/1 var(--font-label);
+  }
+  .page-battles .mobile-filter-toggle[aria-expanded="true"]::after { content: "−"; }
+  .page-battles .battles-filters.is-open {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    gap: 11px 10px;
+    margin: 0;
+    padding: 13px;
+    border: 2px solid var(--sl-ink) !important;
+    border-radius: 14px;
+    background: var(--sl-cream-bright) !important;
+    box-shadow: 0 5px 0 var(--sl-ink) !important;
+  }
+  .page-battles .battles-filters label {
+    min-width: 0 !important;
+    width: auto;
+    gap: 5px;
+  }
+  .page-battles .battles-filters input[type="date"],
+  .page-battles .battles-filters select {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: 44px;
+    box-sizing: border-box;
+    padding: 0 9px;
+    border-radius: 10px;
+    font-size: .78rem;
+  }
+  .page-battles .battles-filters button {
+    min-height: 46px !important;
+    margin-top: 2px;
+  }
+}
+
+@media (max-width: 760px) and (orientation: portrait) {
+  .page-battles .battles-filters label:nth-of-type(5) { grid-column: 1 / -1; }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .page-battles .battles-filters.is-open {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+  .page-battles .battles-filters label:nth-of-type(1),
+  .page-battles .battles-filters label:nth-of-type(2) { grid-column: span 1; }
+}
+
+/* Opponent dossier cards: preserve the full card width for intelligence data. */
+@media (max-width: 620px) and (orientation: portrait) {
+  .page-battles .scout-player,
+  .page-battles .scout-player.is-enemy {
+    grid-template-columns: 62px minmax(0, 1fr);
+    grid-template-areas:
+      "art topline"
+      "art brawler"
+      "stats stats"
+      "profile profile"
+      "loadout loadout"
+      "freshness freshness";
+    gap: 9px 12px;
+    padding: 12px;
+  }
+  .page-battles .scout-identity {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    min-height: 26px;
+    padding: 4px 9px;
+    font-size: .6rem;
+  }
+  .page-battles .scout-player-art {
+    grid-area: art;
+    width: 60px;
+    height: 60px;
+  }
+  .page-battles .scout-brawler-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 14px;
+  }
+  .page-battles .scout-profile-icon {
+    width: 24px;
+    height: 24px;
+  }
+  .page-battles .scout-player-copy { display: contents; }
+  .page-battles .scout-player-topline { grid-area: topline; align-items: flex-start; align-self: end; padding-right: 78px; }
+  .page-battles .scout-player-topline strong {
+    font-size: .9rem;
+    line-height: 1.12;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .page-battles .scout-brawler-name { grid-area: brawler; align-self: start; margin: 0; font-size: .72rem; }
+  .page-battles .scout-stat-row { grid-area: stats; }
+  .page-battles .scout-profile-intel { grid-area: profile; }
+  .page-battles .scout-loadout { grid-area: loadout; }
+  .page-battles .scout-intel-row { grid-area: freshness; }
+  .page-battles .scout-stat-row,
+  .page-battles .scout-intel-row { gap: 5px; }
+  .page-battles .scout-stat-row span,
+  .page-battles .scout-intel-row span {
+    padding: 4px 7px;
+    font-size: .65rem;
+    line-height: 1.2;
+  }
+  .page-battles .scout-profile-intel {
+    grid-template-columns: 64px minmax(0, 1fr);
+    align-items: start;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .page-battles .scout-prestige,
+  .page-battles .scout-prestige--brawler {
+    width: 64px;
+    height: 72px;
+    min-height: 72px;
+    align-self: start;
+  }
+  .page-battles .scout-intel-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
+  .page-battles .scout-intel-grid span { padding: 5px 6px; }
+  .page-battles .scout-intel-grid small {
+    font-size: .48rem;
+    overflow: visible;
+    white-space: normal;
+  }
+  .page-battles .scout-intel-grid b { font-size: .7rem; }
+  .page-battles .scout-loadout { gap: 5px; margin-top: 7px; }
+  .page-battles .scout-loadout span { padding: 4px 6px; font-size: .58rem; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .content-card { animation: sl-terminal-online .42s ease-out both; }
+  .nav-brand::before { animation: sl-reactor-pulse 3.8s ease-in-out infinite; }
+}
+
+@keyframes sl-terminal-online {
+  from { opacity: 0; transform: translateY(12px) scale(.992); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes sl-reactor-pulse {
+  0%, 100% { filter: drop-shadow(0 3px 0 var(--sl-ink)); }
+  50% { filter: drop-shadow(0 3px 0 var(--sl-ink)) drop-shadow(0 0 9px rgba(244, 197, 66, .7)); }
+}

@@ -1,0 +1,3 @@
+# Source provenance
+
+Independent source export from the owner-authorized latest available working implementation, adapted for independently configured hosting. No original/private Git history, personal records, databases, environment secrets, model weights, deployed service definitions or unreviewed original artwork are included. Original neutral SVG assets are MIT; separately licensed fonts and chart packages retain complete notices and pinned-source integrity metadata. This source release is not production or exhaustive security certification. Focused backend and desktop/mobile Chromium acceptance passed; browser API responses were synthetic. WebKit/Safari and real provider delivery remain unverified. See docs/VERIFICATION.md for exact scope.

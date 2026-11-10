@@ -1,0 +1,101 @@
+<nav class="top-nav">
+  <div class="top-nav-inner">
+    <a class="nav-brand" href="/?registry=1">
+      <span class="brand-starrlabs">StarrLabs</span>
+      <span class="brand-division">BATTLE RESEARCH DIVISION</span>
+    </a>
+
+    <div class="nav-links">
+      <a class="nav-link {% if active_page == 'event' %}active{% endif %}" href="/event">
+        Live event
+      </a>
+
+      <a
+        class="nav-link"
+        href="/how-it-works#feedback"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Feedback
+      </a>
+
+      <a class="nav-link {% if active_page == 'how' %}active{% endif %}" href="/how-it-works">
+        How it works
+      </a>
+
+      <a class="nav-link {% if active_page == 'login' %}active{% endif %}" href="/login">
+        Log in
+      </a>
+    </div>
+  </div>
+</nav>
+
+<aside class="orientation-prompt" role="status" aria-live="polite">
+  <span class="orientation-phone" aria-hidden="true"><span></span></span>
+  <span class="orientation-copy">
+    <strong>Rotate for companion mode</strong>
+    <small>Turn your phone sideways for the fastest between-match view.</small>
+  </span>
+</aside>
+
+<script>
+  (() => {
+    const prompt = document.querySelector('.orientation-prompt');
+    const promptKey = 'starrlabs-orientation-hint-seen';
+    const isPortraitPhone = matchMedia('(max-width: 760px) and (orientation: portrait)').matches;
+    if (!prompt || !isPortraitPhone || sessionStorage.getItem(promptKey)) {
+      if (prompt) prompt.hidden = true;
+      return;
+    }
+    sessionStorage.setItem(promptKey, '1');
+    window.setTimeout(() => {
+      prompt.classList.add('is-dismissed');
+      window.setTimeout(() => { prompt.hidden = true; }, 320);
+    }, 4000);
+  })();
+</script>
+
+<script>
+  (() => {
+    const key = `starrlabs-scroll:${location.pathname}${location.search}`;
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    const restore = () => {
+      const saved = Number(sessionStorage.getItem(key));
+      if (Number.isFinite(saved) && saved > 0) requestAnimationFrame(() => scrollTo(0, saved));
+    };
+    addEventListener('DOMContentLoaded', restore, { once: true });
+    addEventListener('pageshow', restore);
+    addEventListener('pagehide', () => sessionStorage.setItem(key, String(scrollY)));
+  })();
+</script>
+
+<nav class="mobile-nav" aria-label="Companion navigation">
+  <a href="/event" class="mobile-nav-item {% if active_page == 'event' %}active{% endif %}">
+    <span class="mobile-nav-icon" aria-hidden="true">◆</span><span>Event</span>
+  </a>
+  <a href="/?registry=1" class="mobile-nav-item {% if active_page == 'home' %}active{% endif %}">
+    <span class="mobile-nav-icon" aria-hidden="true">★</span><span>Players</span>
+  </a>
+  {% if player and player.tag %}
+    <a href="/battles/{{ player.tag.lstrip('#') }}" class="mobile-nav-item">
+      <span class="mobile-nav-icon" aria-hidden="true">⚔</span><span>Battles</span>
+    </a>
+    <a href="/player/{{ player.tag.lstrip('#') }}" class="mobile-nav-item active">
+      <span class="mobile-nav-icon" aria-hidden="true">●</span><span>Profile</span>
+    </a>
+  {% elif tag %}
+    <a href="/battles/{{ tag.lstrip('#') }}" class="mobile-nav-item active">
+      <span class="mobile-nav-icon" aria-hidden="true">⚔</span><span>Battles</span>
+    </a>
+    <a href="/player/{{ tag.lstrip('#') }}" class="mobile-nav-item">
+      <span class="mobile-nav-icon" aria-hidden="true">●</span><span>Profile</span>
+    </a>
+  {% else %}
+    <a href="/how-it-works" class="mobile-nav-item {% if active_page == 'how' %}active{% endif %}">
+      <span class="mobile-nav-icon" aria-hidden="true">?</span><span>Guide</span>
+    </a>
+    <a href="/login" class="mobile-nav-item {% if active_page == 'login' %}active{% endif %}">
+      <span class="mobile-nav-icon" aria-hidden="true">✦</span><span>Log in</span>
+    </a>
+  {% endif %}
+</nav>

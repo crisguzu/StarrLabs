@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Identity Clearance — {{ player.name }} — StarrLabs</title>
+  <link rel="stylesheet" href="/static/styles/main.css?v=player-verification-7">
+  <link rel="stylesheet" href="/static/styles/starrlabs.css?v=phase1-1">
+  {% include "partials/analytics.html" %}
+</head>
+<body class="page-verification">
+  {% include "partials/top_nav.html" %}
+  <main class="verify-shell">
+    <section class="verify-card">
+      <div class="verify-player-strip">
+        <img src="https://cdn.brawlify.com/profile-icons/regular/{{ player.icon_id }}.png" alt="" class="verify-avatar">
+        <div>
+          <span class="verify-eyebrow">PROVE YOU PLAY</span>
+          <h1>{{ player.name }}</h1>
+          <p>{{ player.tag }} · {{ player.trophies or 0 }} trophies</p>
+        </div>
+        <img src="/static/verified/verified_64.png" alt="Verified Player" class="verify-prize">
+      </div>
+
+      {% if verified %}
+      <div class="verify-success">
+        <img src="/static/verified/verified_200.png" alt="">
+        <div><h2>Already verified</h2><p>This player ID is connected to your verified StarrLabs account.</p></div>
+      </div>
+      <a class="verify-primary verify-link" href="/player/{{ player.tag.lstrip('#') }}">View verified profile</a>
+      {% else %}
+      <div id="intro" class="verify-panel">
+        <span class="verify-step-label">HOW IT WORKS</span>
+        <h2 class="verify-heading-gold">Two battles. One unmistakable proof.</h2>
+        <p>We’ll choose two brawlers you own and two modes that are live now. Play them in the exact order shown within 15 minutes.</p>
+        <div class="verify-guardrails">
+          <span>✓ No Supercell password</span><span>✓ No game tokens</span><span>✓ Email stays private</span>
+        </div>
+        {% if transfer_required %}<p class="verify-live-status">This player is linked to another email. Completing a fresh two-battle proof will revoke that old link and transfer the player here. The old email is never shown.</p>{% endif %}
+        <button id="startChallenge" class="verify-primary" type="button">{{ 'Start secure transfer' if transfer_required else 'Reveal my challenge' }}</button>
+      </div>
+
+      <div id="challenge" class="verify-panel" hidden>
+        <div class="verify-progress-head">
+          <div><span class="verify-step-label">LIVE OWNERSHIP CHALLENGE</span><h2 class="verify-heading-gold">Play these in order</h2></div>
+          <div id="countdown" class="verify-countdown">15:00</div>
+        </div>
+        <div id="tasks" class="verify-tasks"></div>
+        <div id="status" class="verify-live-status" role="status" aria-live="polite">Preparing your challenge…</div>
+        <button id="restart" class="verify-secondary" hidden>Generate a new challenge</button>
+      </div>
+
+      <div id="complete" class="verify-panel verify-complete" hidden>
+        <img src="/static/verified/verified_200.png" alt="Verified Player badge">
+        <span class="verify-step-label">OWNERSHIP CONFIRMED</span>
+        <h2>You’re a Verified Player</h2>
+        <p>Your badge now follows {{ player.name }} anywhere this player profile appears on StarrLabs.</p>
+        <a class="verify-primary verify-link" href="/player/{{ player.tag.lstrip('#') }}">Open my verified profile</a>
+      </div>
+      {% endif %}
+    </section>
+    <p class="verify-account-note">Signed in as {{ identity_email }} · StarrLabs never displays this email publicly.</p>
+  </main>
+
+  {% if not verified %}
+  <script>
+    const playerTag = {{ player.tag|tojson }};
+    const intro = document.querySelector('#intro');
+    const challenge = document.querySelector('#challenge');
+    const complete = document.querySelector('#complete');
+    const tasksNode = document.querySelector('#tasks');
+    const statusNode = document.querySelector('#status');
+    const countdown = document.querySelector('#countdown');
+    const restart = document.querySelector('#restart');
+    let challengeId, expiresAt, timer, poller;
+
+    const modeName = value => value.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, c => c.toUpperCase());
+    async function jsonFetch(url, options={}) {
+      const response = await fetch(url, {credentials:'same-origin', ...options});
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.detail || 'Something went wrong. Try again.');
+      return data;
+    }
+    function drawTasks(tasks, completed=0) {
+      tasksNode.innerHTML = tasks.map((task, i) => `
+        <article class="verify-task ${i < completed ? 'done' : ''}">
+          <span class="verify-task-number">${i < completed ? '✓' : i + 1}</span>
+          <span class="verify-task-media" aria-hidden="true">
+            <img class="verify-task-brawler" src="${task.brawler_image_url}" alt="" onerror="this.hidden=true">
+            <img class="verify-task-mode" src="${task.mode_image_url}" alt="" onerror="this.hidden=true">
+          </span>
+          <div><small>${i === 0 ? 'FIRST BATTLE' : 'THEN'}</small><strong>${task.brawler_name}</strong><span>${modeName(task.mode)}${task.map ? ` · ${task.map}` : ''}</span></div>
+        </article>`).join('');
+    }
+    function tick() {
+      const seconds = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+      countdown.textContent = `${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`;
+      if (!seconds) { clearInterval(timer); clearInterval(poller); statusNode.textContent='Challenge expired. Generate a new one.'; restart.hidden=false; }
+    }
+    async function poll() {
+      try {
+        const data = await jsonFetch(`/api/player-verification/${challengeId}`);
+        if (data.status === 'verified') {
+          clearInterval(timer); clearInterval(poller); challenge.hidden=true; complete.hidden=false; return;
+        }
+        if (data.status !== 'pending') { clearInterval(timer); clearInterval(poller); statusNode.textContent='Challenge expired. Generate a new one.'; restart.hidden=false; return; }
+        document.querySelectorAll('.verify-task').forEach((node,i) => { if (i < data.completed) node.classList.add('done'); });
+        statusNode.textContent = data.completed ? 'First battle confirmed! Waiting for battle 2…' : 'Waiting for battle 1… You can leave this screen open.';
+      } catch (error) { statusNode.textContent = error.message; }
+    }
+    async function start() {
+      clearInterval(timer); clearInterval(poller); restart.hidden=true; intro.hidden=true; challenge.hidden=false;
+      statusNode.textContent='Finding your unlocked brawlers and live modes…'; tasksNode.innerHTML='';
+      try {
+        const data = await jsonFetch('/api/player-verification/start', {method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({player_tag:playerTag,purpose:{{ ('transfer' if transfer_required else 'link')|tojson }}})});
+        challengeId=data.challenge_id; expiresAt=new Date(data.expires_at).getTime(); drawTasks(data.tasks); tick();
+        timer=setInterval(tick,1000); poller=setInterval(poll,10000); poll();
+      } catch(error) { statusNode.textContent=error.message; restart.hidden=false; }
+    }
+    document.querySelector('#startChallenge').addEventListener('click', start);
+    restart.addEventListener('click', start);
+  </script>
+  {% endif %}
+</body>
+</html>

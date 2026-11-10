@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Email Clearance — StarrLabs</title>
+  <link rel="stylesheet" href="/static/styles/main.css?v=email-auth-1">
+  <link rel="stylesheet" href="/static/styles/starrlabs.css?v=email-auth-1">
+  {% if turnstile_site_key %}<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>{% endif %}
+  {% include "partials/analytics.html" %}
+</head>
+<body class="page-email-auth">
+  {% include "partials/top_nav.html" %}
+  <main class="email-auth-shell">
+    <section class="email-auth-card" aria-labelledby="email-auth-title">
+      <div class="email-auth-signal" aria-hidden="true">
+        <span class="email-auth-signal-ring"></span>
+        <img src="/static/starrlabs/emblem.png" alt="">
+      </div>
+      <div class="email-auth-copy">
+        <span class="email-auth-eyebrow">IDENTITY CLEARANCE // EMAIL</span>
+        <h1 id="email-auth-title">Enter the lab securely</h1>
+        <p id="email-auth-intro">Use your email to receive a single-use six-digit code. No password required.</p>
+
+        <form id="email-step" class="email-auth-form">
+          <label for="login-email">Email address</label>
+          <input id="login-email" name="email" type="email" maxlength="254" autocomplete="email" inputmode="email" placeholder="operator@example.invalid" required>
+          {% if turnstile_site_key %}<div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}" data-theme="light" data-size="flexible"></div>{% endif %}
+          <button class="email-auth-primary" type="submit">SEND LOGIN CODE</button>
+        </form>
+
+        <form id="code-step" class="email-auth-form" hidden>
+          <label for="login-code">Six-digit code</label>
+          <input id="login-code" class="email-auth-code" name="code" type="text" maxlength="6" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]{6}" placeholder="000000" required>
+          <button class="email-auth-primary" type="submit">VERIFY EMAIL</button>
+          <button id="use-other-email" class="email-auth-secondary" type="button">USE ANOTHER EMAIL</button>
+        </form>
+
+        <div id="email-auth-status" class="email-auth-status" role="status" aria-live="polite">Your code expires after 10 minutes.</div>
+        <div class="email-auth-trust">
+          <span>✓ Single-use code</span>
+          <span>Email is stored by your operator and sent to its configured delivery provider.</span>
+          <span>✓ No Supercell password</span>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script>
+    const nextPath = {{ next_path|tojson }};
+    const emailStep = document.querySelector('#email-step');
+    const codeStep = document.querySelector('#code-step');
+    const statusNode = document.querySelector('#email-auth-status');
+    const emailInput = document.querySelector('#login-email');
+    const codeInput = document.querySelector('#login-code');
+    let challengeId = null;
+
+    async function postJSON(url, payload) {
+      const response = await fetch(url, {
+        method: 'POST', credentials: 'same-origin',
+        headers: {'content-type': 'application/json', 'accept': 'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.detail || 'Something went wrong. Try again.');
+      return data;
+    }
+
+    emailStep.addEventListener('submit', async event => {
+      event.preventDefault();
+      const button = emailStep.querySelector('button');
+      button.disabled = true;
+      statusNode.textContent = 'Sending your secure code…';
+      try {
+        const turnstileToken = emailStep.querySelector('[name="cf-turnstile-response"]')?.value || '';
+        const data = await postJSON('/api/auth/email/start', {email: emailInput.value, next: nextPath, turnstile_token: turnstileToken});
+        challengeId = data.challenge_id;
+        emailStep.hidden = true;
+        codeStep.hidden = false;
+        statusNode.textContent = `Code sent to ${emailInput.value}. It expires in 10 minutes.`;
+        codeInput.focus();
+      } catch (error) {
+        statusNode.textContent = error.message;
+        if (window.turnstile) window.turnstile.reset();
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    codeStep.addEventListener('submit', async event => {
+      event.preventDefault();
+      const button = codeStep.querySelector('.email-auth-primary');
+      button.disabled = true;
+      statusNode.textContent = 'Checking identity clearance…';
+      try {
+        const data = await postJSON('/api/auth/email/verify', {challenge_id: challengeId, code: codeInput.value});
+        statusNode.textContent = 'Email verified. Opening StarrLabs…';
+        location.assign(data.next || '/');
+      } catch (error) {
+        statusNode.textContent = error.message;
+        codeInput.select();
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    document.querySelector('#use-other-email').addEventListener('click', () => {
+      challengeId = null;
+      codeInput.value = '';
+      codeStep.hidden = true;
+      emailStep.hidden = false;
+      statusNode.textContent = 'Your code expires after 10 minutes.';
+      emailInput.focus();
+    });
+  </script>
+</body>
+</html>

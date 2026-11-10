@@ -1,0 +1,46 @@
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>StarrLabs | Analytics system design</title><style>body{margin:0;background:#f8fafc}main{max-width:1080px;margin:24px auto;padding:16px}svg{display:block;width:100%;height:auto}</style><main><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 680" role="img" aria-labelledby="title desc">
+<title id="title">StarrLabs | Analytics system design</title>
+<desc id="desc">Source-backed architecture of the current implementation; standalone distribution is under preparation.</desc>
+<defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="8" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" fill="#64748b"/></marker></defs>
+<rect width="1080" height="680" fill="#f8fafc"/>
+<g font-family="system-ui,sans-serif" fill="#172033">
+<text x="40" y="44" font-size="26" font-weight="700">StarrLabs | Analytics system design</text>
+<text x="40" y="75" font-size="15" fill="#475569">Source-backed architecture of the current implementation; standalone distribution is under preparation.</text>
+<path d="M320 178H390" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M670 178H740" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M320 378H390" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M880 236V320" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M1020 378H1050V178H1020" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M740 216H710V350H670" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M530 500V436" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="40" y="120" width="280" height="116" rx="12" fill="#fef3c7" stroke="#64748b"/>
+<text x="64" y="155" font-size="18" font-weight="650">Game + reference APIs</text>
+<text x="64" y="186" font-size="14" font-weight="400">Official Brawl Stars API</text>
+<text x="64" y="210" font-size="14" font-weight="400">Community reference data</text>
+<rect x="390" y="120" width="280" height="116" rx="12" fill="#e0e7ff" stroke="#64748b"/>
+<text x="414" y="155" font-size="18" font-weight="650">Bounded collectors</text>
+<text x="414" y="186" font-size="14" font-weight="400">Battlelogs + player profiles</text>
+<text x="414" y="210" font-size="14" font-weight="400">Reference snapshots + retries</text>
+<rect x="740" y="120" width="280" height="116" rx="12" fill="#ccfbf1" stroke="#64748b"/>
+<text x="764" y="155" font-size="18" font-weight="650">PostgreSQL</text>
+<text x="764" y="186" font-size="14" font-weight="400">History + point-in-time inputs</text>
+<text x="764" y="210" font-size="14" font-weight="400">Sessions + derived analytics</text>
+<rect x="40" y="320" width="280" height="116" rx="12" fill="#fef3c7" stroke="#64748b"/>
+<text x="64" y="355" font-size="18" font-weight="650">Email + bot challenge</text>
+<text x="64" y="386" font-size="14" font-weight="400">Resend + Turnstile adapters</text>
+<text x="64" y="410" font-size="14" font-weight="400">Operator-supplied credentials</text>
+<rect x="390" y="320" width="280" height="116" rx="12" fill="#e0e7ff" stroke="#64748b"/>
+<text x="414" y="355" font-size="18" font-weight="650">FastAPI application</text>
+<text x="414" y="386" font-size="14" font-weight="400">Sessions + ownership checks</text>
+<text x="414" y="410" font-size="14" font-weight="400">Jinja2 pages + analytics APIs</text>
+<rect x="740" y="320" width="280" height="116" rx="12" fill="#e0e7ff" stroke="#64748b"/>
+<text x="764" y="355" font-size="18" font-weight="650">Analytics / ML jobs</text>
+<text x="764" y="386" font-size="14" font-weight="400">Feature construction + scoring</text>
+<text x="764" y="410" font-size="14" font-weight="400">Training is separate / optional</text>
+<rect x="390" y="500" width="280" height="116" rx="12" fill="#e2e8f0" stroke="#64748b"/>
+<text x="414" y="535" font-size="18" font-weight="650">Browser interface</text>
+<text x="414" y="566" font-size="14" font-weight="400">Player and battle analysis</text>
+<text x="414" y="590" font-size="14" font-weight="400">Progress + event dashboards</text>
+<text x="40" y="647" font-size="14" fill="#475569">Distribution boundary: no live data, credentials, trained artifacts, private telemetry, or machine-specific services.</text>
+</g></svg>
+</main>

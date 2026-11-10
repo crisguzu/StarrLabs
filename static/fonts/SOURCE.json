@@ -1,0 +1,17 @@
+{
+  "license": "SIL Open Font License 1.1; not MIT",
+  "files": [
+    {
+      "file": "LilitaOne-Regular.ttf",
+      "upstream": "https://raw.githubusercontent.com/google/fonts/90abd17b4f97671435798b6147b698aa9087612f/ofl/lilitaone/LilitaOne-Regular.ttf",
+      "sha256": "f5b641c45c69d772ee4eda687bc9fda411d5cad6b0b45371491da4580cbc8d59",
+      "bytes": 28092
+    },
+    {
+      "file": "OFL.txt",
+      "upstream": "https://raw.githubusercontent.com/google/fonts/90abd17b4f97671435798b6147b698aa9087612f/ofl/lilitaone/OFL.txt",
+      "sha256": "255d5debbb80eb2ea762644311f266a279e8778f00156655a516e2b7781a63e1",
+      "bytes": 4392
+    }
+  ]
+}

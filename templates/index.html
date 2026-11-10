@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>StarrLabs — Battle Research Division</title>
+  <link rel="icon" type="image/png" href="/static/favicon.ico">
+  <link rel="stylesheet" href="/static/styles/main.css?v=registry-sort-1">
+  <link rel="stylesheet" href="/static/styles/starrlabs.css?v=phase2-2">
+  <!-- Umami Analytics -->
+  {% include "partials/analytics.html" %}
+</head>
+
+<body class="page-home">
+  {% include "partials/top_nav.html" %}
+
+  <main id="identify-wrap" class="is-hidden account-welcome" aria-labelledby="welcome-title">
+    <section class="account-welcome-card">
+      <div class="account-welcome-art" aria-hidden="true">
+        <img class="sl-welcome-missy" src="/static/starrlabs/phase2/characters/missy-neutral-reference.webp" alt="">
+      </div>
+      <div class="account-welcome-copy">
+        <span class="account-welcome-eyebrow">STARRLABS // PLAYER REGISTRY</span>
+        <h1 id="welcome-title">Register your battle profile</h1>
+        <p>Enter your player tag to open your research record. You will confirm the public profile before anything is saved.</p>
+        <ol class="onboarding-steps" aria-label="Getting started">
+          <li><b>1</b><span><strong>Find</strong><small>Enter the tag beneath your in-game name.</small></span></li>
+          <li><b>2</b><span><strong>Confirm</strong><small>Check the public name, icon, and trophies.</small></span></li>
+          <li><b>3</b><span><strong>Verify</strong><small>Link ownership to remember and switch players.</small></span></li>
+        </ol>
+        <form id="identify-form" class="account-find-form" method="post" action="/identify">
+          <label for="identify-tag">Player tag</label>
+          <div class="account-find-controls">
+            <input id="identify-tag" type="text" name="tag" placeholder="#DEMO000" autocomplete="off" autocapitalize="characters" required>
+            <button type="submit"><span>Find my profile</span></button>
+          </div>
+          <p id="identify-text" class="account-find-status" role="status" aria-live="polite">StarrLabs never asks for your Supercell password.</p>
+        </form>
+        <section id="profile-confirmation" class="profile-confirmation is-hidden" aria-live="polite">
+          <img id="confirm-profile-icon" src="/static/models/default.png" alt="">
+          <div class="profile-confirmation-copy">
+            <span>PROFILE FOUND</span>
+            <strong id="confirm-profile-name">—</strong>
+            <small id="confirm-profile-details">—</small>
+          </div>
+          <div class="profile-confirmation-actions">
+            <button id="btn-confirm-profile" type="button"><span>This is my profile</span></button>
+            <a id="confirm-view-analytics" class="profile-confirmation-link" href="#">View analytics</a>
+            <button id="btn-change-profile" class="profile-confirmation-change" type="button">Use another tag</button>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <div id="account-dashboard" class="content-card is-hidden">
+    <div class="page-title-row">
+      <h2 class="page-title">Player Registry</h2>
+
+      <a class="info-link" href="/how-it-works#one-liner" title="How it works">
+        <img src="/static/info.png" alt="Info" class="info-icon">
+      </a>
+    </div>
+
+    <div class="subtitle">
+      Observe player performance and battle records over time.
+    </div>
+
+    <div id="account-summary" class="account-summary is-hidden">
+      <div>
+        <span class="account-summary-label">YOUR ACCOUNT</span>
+        <strong id="account-summary-tag">—</strong>
+      </div>
+      <div class="account-summary-actions">
+        <a id="account-verify-link" class="account-verify-link" href="#">VERIFY THIS PROFILE</a>
+        <button id="btn-link-account" class="account-link-button" type="button">Link another player</button>
+      </div>
+    </div>
+
+    <!-- =========================
+         Lists toolbar (only when recognized)
+         ========================= -->
+    <div id="lists-toolbar" class="is-hidden lists-toolbar">
+      <div class="toolbar-layout">
+        <div class="toolbar-controls">
+          <label for="list-select" class="toolbar-label">List</label>
+          <select id="list-select" class="list-select"></select>
+
+          <button id="btn-new-list" type="button" title="Create a new list">
+            <span>New list</span>
+          </button>
+
+          <button id="btn-rename-list" type="button" title="Rename this list">
+            <span>Rename</span>
+          </button>
+
+          <button id="btn-favorite" type="button" title="Favorite this list">
+            <span>❤ Favorite</span>
+          </button>
+
+          <button id="btn-my-club" type="button" title="Load your current Brawl Stars club">
+            <span>My club</span>
+          </button>
+
+          <!-- ✅ Share can show for My club too -->
+          <button id="btn-share-list" type="button" title="Share this list (read-only link)">
+            <span>Share</span>
+          </button>
+
+          <button id="btn-delete-list" type="button" title="Delete this list">
+            <span>Delete</span>
+          </button>
+        </div>
+
+        <div class="owner-tools">
+          <div id="owner-pill" class="percent-badge" title="Recognized tag">—</div>
+
+          <button id="btn-switch-player" type="button" class="owner-session-action" title="Choose another verified player">Switch player</button>
+          <button id="btn-logout" type="button" class="owner-session-action owner-session-action--signout" title="Sign out on this browser">Sign out</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================
+         Shared toolbar (when ?share=TOKEN)
+         ========================= -->
+    <div id="shared-toolbar" class="is-hidden shared-toolbar">
+      <div class="status-banner status-banner--visible">
+        <div class="status-row status-row--spread">
+          <div class="status-pill">
+            <span id="shared-text">Viewing shared list (read-only).</span>
+          </div>
+          <div class="toolbar-controls">
+            <button id="btn-save-copy" type="button" title="Save a copy to your lists">
+              <span>Save a copy</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================
+         Add player form (list-aware when recognized)
+         ========================= -->
+    <form id="track-form" method="post" action="/add-player">
+      <input id="tag-input" type="text" name="tag" placeholder="Enter a player tag (e.g. 22YVVQQ8)"
+             pattern="#?[0289PYLQGRJCUVpyqlgrjcuvOo]+" autocapitalize="characters" autocomplete="off" required />
+      <input id="list-id-input" type="hidden" name="list_id" value="" />
+      <button type="submit"><span>Add player</span></button>
+    </form>
+
+    <!-- ✅ Status / Progress UI -->
+    <div id="track-status" class="status-banner is-hidden">
+      <div class="status-row">
+        <div id="status-pill" class="status-pill">
+          <span id="status-text">Retrieving information...</span>
+        </div>
+
+        <div class="status-meta">
+          <span id="status-percent" class="percent-badge">0%</span>
+        </div>
+      </div>
+
+      <div class="progress-wrap">
+        <div id="progress-bar" class="progress-bar"></div>
+      </div>
+
+      <div id="status-steps" class="status-steps"></div>
+
+      <div id="status-warning" class="status-warning is-hidden">
+        Loading… Don’t refresh or leave—your stats are being synced.
+      </div>
+    </div>
+
+    <h2 class="section-heading">Tracked players</h2>
+
+    <!-- ✅ Dynamic area -->
+    <div id="tracked-empty" class="is-hidden">
+      <p id="tracked-empty-text">No players yet. Add a tag above to get started.</p>
+    </div>
+
+    <div id="mobile-table-sort" class="mobile-table-sort is-hidden">
+      <label for="mobile-sort-key">Order players by</label>
+      <select id="mobile-sort-key">
+        <option value="trophies" data-default="desc">Trophies</option>
+        <option value="player" data-default="asc">Player</option>
+        <option value="ranked" data-default="desc">Ranked</option>
+        <option value="highest_ranked" data-default="desc">Highest Ranked</option>
+        <option value="victory_score" data-default="desc">Victory Score</option>
+        <option value="level" data-default="desc">Level</option>
+        <option value="brawlers" data-default="desc">Brawlers</option>
+        <option value="best_brawler" data-default="desc">Best brawler</option>
+        <option value="matches" data-default="desc">7-day matches</option>
+        <option value="most_used" data-default="desc">Most-used brawler</option>
+      </select>
+      <button id="mobile-sort-direction" type="button" aria-label="Sort descending" title="Reverse sort direction">↓</button>
+    </div>
+
+    <div id="tracked-table-wrap" class="table-scroll is-hidden">
+      <table class="tracked-table">
+        <thead>
+          <tr>
+            <th aria-sort="none"><button class="table-sort" type="button" data-sort-key="player" data-sort-default="asc">Player<span class="sort-mark" aria-hidden="true"></span></button></th>
+            <th aria-sort="none"><button class="table-sort" type="button" data-sort-key="tag" data-sort-default="asc">Tag<span class="sort-mark" aria-hidden="true"></span></button></th>
+            <th aria-sort="none"><button class="table-sort" type="button" data-sort-key="ranked" data-sort-default="desc">Ranked<span class="sort-mark" aria-hidden="true"></span></button></th>
+            <th aria-sort="none"><button class="table-sort" type="button" data-sort-key="highest_ranked" data-sort-default="desc"><span class="th-2line">Highest<br>Ranked</span><span class="sort-mark" aria-hidden="true"></span></button></th>
+
+            <th class="col-performance" aria-sort="none">
+              <span class="th-inline">
+                <button class="table-sort" type="button" data-sort-key="victory_score" data-sort-default="desc"><span class="th-2line">Victory<br>Score</span><span class="sort-mark" aria-hidden="true"></span></button>
+                <a class="info-link" href="/how-it-works#faq-victory-score" title="How Victory Score works">
+                  <img src="/static/info.png" alt="Info" class="info-icon info-icon--sm">
+                </a>
+              </span>
+            </th>
+
+            <th aria-sort="none"><button class="table-sort" type="button" data-sort-key="trophies" data-sort-default="desc">Trophies<span class="sort-mark" aria-hidden="true"></span></button></th>
+            <th aria-sort="none"><button class="table-sort" type="button" data-sort-key="level" data-sort-default="desc">Level<span class="sort-mark" aria-hidden="true"></span></button></th>
+            <th aria-sort="none"><button class="table-sort" type="button" data-sort-key="brawlers" data-sort-default="desc">Brawlers<span class="sort-mark" aria-hidden="true"></span></button></th>
+            <th aria-sort="none"><button class="table-sort" type="button" data-sort-key="best_brawler" data-sort-default="desc">Best brawler<span class="sort-mark" aria-hidden="true"></span></button></th>
+
+            <!-- ✅ New 7d stats -->
+            <th class="col-7d" aria-sort="none">
+              <button class="table-sort" type="button" data-sort-key="matches" data-sort-default="desc">
+                <span class="th-stack">
+                  <span>Matches • W • L</span>
+                  <span class="th-sub">Last 7 days</span>
+                </span>
+                <span class="sort-mark" aria-hidden="true"></span>
+              </button>
+            </th>
+
+            <th class="col-mostused" aria-sort="none">
+              <button class="table-sort" type="button" data-sort-key="most_used" data-sort-default="desc">
+                <span class="th-stack">
+                  <span>Most used</span>
+                  <span class="th-sub">Last 7 days</span>
+                </span>
+                <span class="sort-mark" aria-hidden="true"></span>
+              </button>
+            </th>
+
+            <th>Battles</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tracked-tbody"></tbody>
+      </table>
+    </div>
+
+    <script>
+      // -------------------------
+      // Elements
+      // -------------------------
+      const form = document.getElementById("track-form");
+      const statusBanner = document.getElementById("track-status");
+      const btn = form.querySelector("button[type='submit']");
+
+      const statusPill = document.getElementById("status-pill");
+      const warningEl = document.getElementById("status-warning");
+      const statusText = document.getElementById("status-text");
+      const bar = document.getElementById("progress-bar");
+      const pct = document.getElementById("status-percent");
+      const steps = document.getElementById("status-steps");
+
+      const identifyWrap = document.getElementById("identify-wrap");
+      const identifyForm = document.getElementById("identify-form");
+      const identifyTag = document.getElementById("identify-tag");
+      const identifyText = document.getElementById("identify-text");
+      const profileConfirmation = document.getElementById("profile-confirmation");
+      const confirmProfileIcon = document.getElementById("confirm-profile-icon");
+      const confirmProfileName = document.getElementById("confirm-profile-name");
+      const confirmProfileDetails = document.getElementById("confirm-profile-details");
+      const confirmViewAnalytics = document.getElementById("confirm-view-analytics");
+      const btnConfirmProfile = document.getElementById("btn-confirm-profile");
+      const btnChangeProfile = document.getElementById("btn-change-profile");
+      const accountDashboard = document.getElementById("account-dashboard");
+      const accountSummary = document.getElementById("account-summary");
+      const accountSummaryTag = document.getElementById("account-summary-tag");
+      const accountVerifyLink = document.getElementById("account-verify-link");
+      const btnLinkAccount = document.getElementById("btn-link-account");
+
+      const listsToolbar = document.getElementById("lists-toolbar");
+      const listSelect = document.getElementById("list-select");
+      const btnNewList = document.getElementById("btn-new-list");
+      const btnRenameList = document.getElementById("btn-rename-list");
+      const btnFavorite = document.getElementById("btn-favorite");
+      const btnDeleteList = document.getElementById("btn-delete-list");
+      const btnMyClub = document.getElementById("btn-my-club");
+      const btnShareList = document.getElementById("btn-share-list");
+      const ownerPill = document.getElementById("owner-pill");
+      const listIdInput = document.getElementById("list-id-input");
+
+      const sharedToolbar = document.getElementById("shared-toolbar");
+      const sharedText = document.getElementById("shared-text");
+      const btnSaveCopy = document.getElementById("btn-save-copy");
+
+      const emptyWrap = document.getElementById("tracked-empty");
+      const emptyText = document.getElementById("tracked-empty-text");
+      const tableWrap = document.getElementById("tracked-table-wrap");
+      const tbody = document.getElementById("tracked-tbody");
+      const mobileSortWrap = document.getElementById("mobile-table-sort");
+      const mobileSortKey = document.getElementById("mobile-sort-key");
+      const mobileSortDirection = document.getElementById("mobile-sort-direction");
+
+      const btnLogout = document.getElementById("btn-logout");
+      const btnSwitchPlayer = document.getElementById("btn-switch-player");
+
+      let ME = { recognized: false, owner_tag: null, selected_list_id: null };
+      let LISTS = [];
+      let CURRENT_LIST = null;
+      let CURRENT_PLAYERS = [];
+      let TABLE_SORT = { key: "trophies", direction: "desc" };
+
+      let SHARE = { active: false, token: null, list: null };
+      let PENDING_PROFILE = null;
+
+      // ✅ only warn when we are actively syncing
+      let isSyncing = false;
+
+      // -------------------------
+      // URL helpers (list in URL)
+      // -------------------------
+      function getQueryParam(name) {
+        const url = new URL(window.location.href);
+        return url.searchParams.get(name);
+      }
+
+      function setListInUrl(listId) {
+        const url = new URL(window.location.href);
+        url.searchParams.set("list", String(listId));
+        url.searchParams.delete("share");
+        history.replaceState({}, "", url);
+      }
+
+      function setShareInUrl(token) {
+        const url = new URL(window.location.href);
+        url.searchParams.set("share", String(token));
+        url.searchParams.delete("list");
+        history.replaceState({}, "", url);
+      }
+
+      function getShareFromUrl() {
+        const url = new URL(window.location.href);
+        return url.searchParams.get("share");
+      }
+
+      // Prefer share URL if we have a token for the selected list
+      function syncUrlToSelectedList() {
+        const selected = getSelectedList();
+        if (!selected) return;
+
+        if (selected.share_token && selected.is_public) {
+          setShareInUrl(selected.share_token);
+        } else {
+          setListInUrl(selected.id);
+        }
+      }
+
+      function getListFromUrl() {
+        const url = new URL(window.location.href);
+        const v = url.searchParams.get("list");
+        if (!v) return null;
+        const n = Number(v);
+        return Number.isFinite(n) ? n : null;
+      }
+
+      function clearShareFromUrl() {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("share");
+        history.replaceState({}, "", url);
+      }
+
+      async function selectList(listId) {
+        const j = await apiJSON("/api/lists/select", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({ list_id: Number(listId) })
+        });
+        return j;
+      }
+
+      // -------------------------
+      // Helpers
+      // -------------------------
+      function showStatus() { statusBanner.style.display = "block"; }
+      function setStatus(text) { showStatus(); statusText.textContent = text; }
+
+      function setProgress(progress, step) {
+        const p = Math.max(0, Math.min(100, Number(progress || 0)));
+        bar.style.width = p + "%";
+        pct.textContent = p + "%";
+
+        const vibeLine = (prog) => {
+          if (prog < 25) return "Scanning your Brawl Stars profile…";
+          if (prog < 50) return "Gathering brawler stats and loadouts…";
+          if (prog < 75) return "Syncing battles and trophies…";
+          if (prog < 90) return "Powering up your brawlers…";
+          return "Finalizing your battle data…";
+        };
+
+        const stepLabel = {
+          start: "Booting up the arena…",
+          profile: "Pulling your profile stats…",
+          battles: "Downloading your battle history…",
+          daily: "Saving daily snapshot…",
+          brawler_daily: "Updating brawler snapshots…",
+          done: "Ready to brawl!",
+          error: "Something broke in the arena."
+        }[step] || "Working...";
+
+        steps.textContent = `${vibeLine(p)}  •  ${stepLabel}`;
+      }
+
+      function resetStatusUI() {
+        statusPill.classList.remove("loading");
+        warningEl.style.display = "none";
+        btn.disabled = false;
+        isSyncing = false;
+      }
+
+      // Telemetry is intentionally absent from the standalone distribution.
+
+      async function pollJob(jobId) {
+        while (true) {
+          const r = await fetch(`/api/refresh-status/${jobId}`, { headers: { "Accept": "application/json" } });
+          const j = await r.json();
+
+          if (!j.ok) {
+            setStatus(j.message || "Error.");
+            setProgress(100, "error");
+            resetStatusUI();
+            return;
+          }
+
+          setStatus(j.message || "Working...");
+          setProgress(j.progress || 0, j.step);
+
+          if (j.done) {
+            resetStatusUI();
+
+            if (j.status === "done") {
+              setProgress(100, "done");
+              await refreshListsAndPlayers();
+            } else {
+              setProgress(100, "error");
+            }
+            return;
+          }
+
+          await new Promise(res => setTimeout(res, 800));
+        }
+      }
+
+      function esc(s) {
+        return (s ?? "").toString()
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function pick(obj, keys, fallback = null) {
+        for (const k of keys) {
+          if (obj && obj[k] !== undefined && obj[k] !== null && obj[k] !== "") return obj[k];
+        }
+        return fallback;
+      }
+
+      function fmtScore(v) {
+        if (v === null || v === undefined) return null;
+        const n = Number(v);
+        if (!Number.isFinite(n)) return null;
+        return String(Math.round(n));
+      }
+
+      function perfHTML(p) {
+        const score = fmtScore(p.victory_score_30d ?? p.victory_score);
+        if (score === null) return `<span class="perf-pill">—</span>`;
+        return `<span class="perf-pill" title="Victory Score V2 · rolling 30 days">${esc(score)}</span>`;
+      }
+
+      function playerIconURL(icon_id) {
+        if (!icon_id) return null;
+        return `https://cdn.brawlify.com/profile-icons/regular/${icon_id}.png`;
+      }
+
+      function getSelectedList() {
+        return LISTS.find(x => Number(x.id) === Number(ME.selected_list_id)) || null;
+      }
+
+      // ✅ editable = can rename/favorite/delete/add/remove players
+      function canEditSelectedList() {
+        if (!ME?.recognized) return false;
+        if (SHARE.active) return false;
+
+        const selected = getSelectedList();
+        if (!selected) return false;
+
+        if (selected.can_edit !== undefined) return selected.can_edit === true;
+        if (selected.is_system) return false;
+        if (selected.is_deletable === false) return false;
+        return true;
+      }
+
+      // ✅ shareable = allow My club too
+      function canShareSelectedList() {
+        if (!ME?.recognized) return false;
+        if (SHARE.active) return false;
+
+        const selected = getSelectedList();
+        if (!selected) return false;
+
+        if ((selected.owner_tag || null) && (selected.owner_tag !== ME.owner_tag)) return false;
+
+        if (selected.is_system) {
+          return selected.system_key === "my_club";
+        }
+
+        if (selected.is_deletable === false) return false;
+        return true;
+      }
+
+      function setFormEditable(editable) {
+        form.style.opacity = editable ? "1" : "0.6";
+        form.querySelector("input[name='tag']").disabled = !editable;
+        form.querySelector("button[type='submit']").disabled = !editable;
+      }
+
+      function rowHTML(p) {
+        const iconUrl = playerIconURL(p.icon_id);
+        const name = p.name || "Unknown";
+        const tag = p.tag || "";
+        const tagNoHash = tag.replace("#", "");
+        const rawPrestige = pick(p, ["total_prestige_level", "totalPrestigeLevel"]);
+        const prestige = (rawPrestige === null || rawPrestige === undefined || String(rawPrestige).trim() === "") ? 0 : rawPrestige;
+        const prestigeBadge = `<span class="player-prestige" title="Account prestige ${esc(prestige)}" aria-label="Account prestige ${esc(prestige)}"><img src="https://cdn.brawlify.com/prestiges/regular/4.png" alt="" aria-hidden="true" onerror="this.parentElement.classList.add('asset-failed');this.remove()"><strong>${esc(prestige)}</strong></span>`;
+
+        const rankedUrl = pick(p, ["ranked_icon_url", "rankedIconUrl", "ranked_url", "rankedUrl"]);
+        const highestRankedUrl = pick(p, ["highest_ranked_icon_url", "highestRankedIconUrl", "highest_ranked_url", "highestRankedUrl"]);
+
+        const rankedName = pick(p, ["ranked_rank_name", "rankedRankName"], "Current Ranked level");
+        const highestRankedName = pick(p, ["highest_ranked_rank_name", "highestRankedRankName"], "Highest Ranked level");
+        const rankedIcon = rankedUrl
+          ? `<img src="${esc(rankedUrl)}" alt="${esc(rankedName)}" title="${esc(rankedName)}" class="ranked-icon">`
+          : `-`;
+
+        const highestRankedIcon = highestRankedUrl
+          ? `<img src="${esc(highestRankedUrl)}" alt="${esc(highestRankedName)}" title="${esc(highestRankedName)}" class="ranked-icon">`
+          : `-`;
+
+        const ownedTotal = pick(p, ["brawlers_owned_total"], "-");
+
+        let best = "-";
+        const favName = pick(p, ["favorite_brawler_name", "favoriteBrawlerName"]);
+        if (favName) {
+          const favEmoji = pick(p, ["favorite_brawler_emoji_url", "favoriteBrawlerEmojiUrl"]);
+          const favTrophies = pick(p, ["favorite_brawler_trophies", "favoriteBrawlerTrophies"]);
+          const em = favEmoji ? `<img src="${esc(favEmoji)}" alt="${esc(favName)}" class="brawler-icon">` : "";
+          const trophies = (favTrophies !== null && favTrophies !== undefined && favTrophies !== "")
+            ? ` (${esc(favTrophies)}🏆)`
+            : "";
+
+          best = `
+                  <div class="cell-with-icon cell-stack">
+                    ${em}
+                    <div class="cell-stack-text">
+                      <div class="cell-main">${esc(favName)}</div>
+                      <div class="cell-sub">${esc(favTrophies)} 🏆</div>
+                    </div>
+                  </div>
+                `;
+        }
+
+        const matches7 = Number(p.matches_7d || 0);
+        const wins7 = Number(p.wins_7d || 0);
+        const losses7 = Number(p.losses_7d || 0);
+
+        let mostUsed = "-";
+        const muName = pick(p, ["most_used_brawler_name"]);
+        const muEmoji = pick(p, ["most_used_brawler_emoji_url"]);
+        const muMatches = pick(p, ["most_used_brawler_matches_7d"]);
+        if (muName) {
+          const em = muEmoji ? `<img src="${esc(muEmoji)}" alt="${esc(muName)}" class="brawler-icon">` : "";
+          const suffix = (muMatches !== null && muMatches !== undefined && muMatches !== "")
+            ? ` (${esc(muMatches)})`
+            : "";
+
+          mostUsed = `
+                      <div class="cell-with-icon cell-stack">
+                        ${em}
+                        <div class="cell-stack-text">
+                          <div class="cell-main">${esc(muName)}</div>
+                          <div class="cell-sub">${esc(muMatches)}</div>
+                        </div>
+                      </div>
+                    `;
+
+        }
+
+        const editable = canEditSelectedList();
+        const isMyAccounts = getSelectedList()?.system_key === "my_accounts";
+        const inviteTag = (tag || "").replace("#", "");
+        const canInvite = !isMyAccounts && (ME?.owner_tag && tag && (String(tag) !== String(ME.owner_tag)));
+
+        const addBtn = canInvite
+          ? `<a class="row-add-btn" href="https://link.brawlstars.com/invite/friend/en/?tag=${encodeURIComponent(inviteTag)}" target="_blank" rel="noopener" title="Add as friend"><span>Add</span></a>`
+          : "";
+        const removeBtn = editable
+          ? `<button type="button" class="btn-remove-player owner-logout" data-tag="${esc(tag)}" title="Remove from list"><span>×</span></button>`
+          : "";
+        const accountButtons = isMyAccounts
+          ? `${p.is_primary_account
+                ? `<span class="primary-account-badge" title="Your main account">Main</span>`
+                : `<button type="button" class="btn-primary-account" data-tag="${esc(tag)}" title="Make this your main account"><span>Make main</span></button>`}
+             ${String(tag) !== String(ME.owner_tag) ? `<button type="button" class="btn-switch-account" data-tag="${esc(tag)}" title="Use this account"><span>Use</span></button>` : ''}
+             <button type="button" class="btn-unlink-account owner-logout" data-tag="${esc(tag)}" title="Remove this verified account"><span>×</span></button>`
+          : "";
+
+        return `
+          <tr data-tag="${esc(tag)}">
+            <td class="player-card-identity">
+              <a href="/player/${esc(tagNoHash)}" class="player-link">
+                ${iconUrl ? `<img src="${esc(iconUrl)}" alt="icon" class="player-icon">` : ""}
+                ${prestigeBadge}
+                <span class="player-name-wrap">
+                  <span class="player-name">${esc(name)}</span>
+                  ${p.verified_player ? `<span class="verified-player-badge" title="Ownership verified by Brawl Stars Analytics"><img src="/static/verified/verified_24.png" alt=""> Verified Player</span>` : ''}
+                </span>
+              </a>
+            </td>
+            <td class="tag">${esc(tag)}</td>
+
+            <td class="rank-cell player-card-rank">${rankedIcon}</td>
+            <td class="rank-cell">${highestRankedIcon}</td>
+
+            <td class="col-performance player-card-score" data-label="V2 · 30 days">${perfHTML(p)}</td>
+
+            <td class="player-card-trophies" data-label="Trophies">
+              <span class="player-card-trophy-value">
+                <span>${p.trophies ?? "-"}</span>
+                <span class="player-card-trophy-icon" aria-hidden="true">🏆</span>
+              </span>
+            </td>
+            <td>${(p.exp_level !== null && p.exp_level !== undefined) ? `Lv ${esc(p.exp_level)}` : "-"}</td>
+            <td>${esc(ownedTotal)}</td>
+            <td>${best}</td>
+
+            <td class="col-7d player-card-week" data-label="7-day record">
+              <div class="match-window-stats" aria-label="${matches7} matches, ${wins7} wins, ${losses7} losses in the last 7 days">
+                <span><small>M</small><strong>${matches7}</strong></span>
+                <span><small>W</small><strong>${wins7}</strong></span>
+                <span><small>L</small><strong>${losses7}</strong></span>
+              </div>
+            </td>
+
+            <td class="col-mostused">${mostUsed}</td>
+
+            <td class="player-card-battles">
+              <a href="/battles/${esc(tagNoHash)}" class="battles-link"><span>Battles</span></a>
+            </td>
+
+            <td class="row-actions player-card-actions">
+              ${addBtn}
+              ${removeBtn}
+              ${accountButtons}
+            </td>
+          </tr>
+        `;
+      }
+
+      function setEmptyState(message) {
+        emptyText.textContent = message;
+        emptyWrap.style.display = "block";
+        tableWrap.style.display = "none";
+        mobileSortWrap.classList.remove("is-populated");
+      }
+
+      function numericSortValue(value) {
+        if (value === null || value === undefined || value === "") return null;
+        const number = Number(value);
+        return Number.isFinite(number) ? number : null;
+      }
+
+      const SORT_VALUE = {
+        player: p => (p.name || "").toLocaleLowerCase(),
+        tag: p => (p.tag || "").toLocaleLowerCase(),
+        ranked: p => numericSortValue(p.ranked_level),
+        highest_ranked: p => numericSortValue(p.highest_ranked_level),
+        victory_score: p => numericSortValue(p.victory_score_30d ?? p.victory_score),
+        trophies: p => numericSortValue(p.trophies),
+        level: p => numericSortValue(p.exp_level),
+        brawlers: p => numericSortValue(p.brawlers_owned),
+        best_brawler: p => numericSortValue(p.favorite_brawler_trophies),
+        matches: p => numericSortValue(p.matches_7d),
+        most_used: p => numericSortValue(p.most_used_brawler_matches_7d)
+      };
+
+      function missingSortValue(value) {
+        return value === null || value === undefined || value === "" || (typeof value === "number" && !Number.isFinite(value));
+      }
+
+      function sortedPlayers() {
+        const rows = CURRENT_PLAYERS.map((player, index) => ({ player, index }));
+        const getter = SORT_VALUE[TABLE_SORT.key];
+        if (!getter) return rows.map(row => row.player);
+        const direction = TABLE_SORT.direction === "desc" ? -1 : 1;
+        rows.sort((a, b) => {
+          const av = getter(a.player);
+          const bv = getter(b.player);
+          const aMissing = missingSortValue(av);
+          const bMissing = missingSortValue(bv);
+          if (aMissing || bMissing) {
+            if (aMissing && bMissing) return a.index - b.index;
+            return aMissing ? 1 : -1;
+          }
+          const compared = typeof av === "string"
+            ? av.localeCompare(String(bv), undefined, { numeric: true, sensitivity: "base" })
+            : av - bv;
+          return compared === 0 ? a.index - b.index : compared * direction;
+        });
+        return rows.map(row => row.player);
+      }
+
+      function updateSortHeaders() {
+        document.querySelectorAll(".table-sort[data-sort-key]").forEach(button => {
+          const active = button.dataset.sortKey === TABLE_SORT.key;
+          const direction = active ? TABLE_SORT.direction : null;
+          const th = button.closest("th");
+          button.classList.toggle("is-active", active);
+          button.querySelector(".sort-mark").textContent = direction === "asc" ? "▲" : direction === "desc" ? "▼" : "↕";
+          if (th) th.setAttribute("aria-sort", direction === "asc" ? "ascending" : direction === "desc" ? "descending" : "none");
+        });
+        if (TABLE_SORT.key) mobileSortKey.value = TABLE_SORT.key;
+        mobileSortDirection.textContent = TABLE_SORT.direction === "asc" ? "↑" : "↓";
+        mobileSortDirection.setAttribute("aria-label", TABLE_SORT.direction === "asc" ? "Sort ascending" : "Sort descending");
+      }
+
+      function renderCurrentTable() {
+        tbody.innerHTML = sortedPlayers().map(rowHTML).join("");
+        updateSortHeaders();
+      }
+
+      function setTable(players) {
+        CURRENT_PLAYERS = (players || []).slice();
+        renderCurrentTable();
+        emptyWrap.style.display = "none";
+        tableWrap.style.display = "block";
+        mobileSortWrap.classList.add("is-populated");
+      }
+
+      document.querySelectorAll(".table-sort[data-sort-key]").forEach(button => {
+        button.addEventListener("click", () => {
+          const key = button.dataset.sortKey;
+          if (TABLE_SORT.key === key) {
+            TABLE_SORT.direction = TABLE_SORT.direction === "asc" ? "desc" : "asc";
+          } else {
+            TABLE_SORT.key = key;
+            TABLE_SORT.direction = button.dataset.sortDefault || "asc";
+          }
+          renderCurrentTable();
+        });
+      });
+      updateSortHeaders();
+
+      mobileSortKey.addEventListener("change", () => {
+        const option = mobileSortKey.selectedOptions[0];
+        TABLE_SORT.key = mobileSortKey.value;
+        TABLE_SORT.direction = option?.dataset.default || "asc";
+        renderCurrentTable();
+      });
+
+      mobileSortDirection.addEventListener("click", () => {
+        if (!TABLE_SORT.key) TABLE_SORT.key = mobileSortKey.value || "trophies";
+        TABLE_SORT.direction = TABLE_SORT.direction === "asc" ? "desc" : "asc";
+        renderCurrentTable();
+      });
+
+      let lastCompanionRefresh = Date.now();
+      async function refreshCompanionData() {
+        if (isSyncing || document.hidden) return;
+        lastCompanionRefresh = Date.now();
+        if (SHARE.active && SHARE.token) await loadShared(SHARE.token);
+        else await refreshListsAndPlayers();
+      }
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden && Date.now() - lastCompanionRefresh > 15000) refreshCompanionData();
+      });
+      window.setInterval(refreshCompanionData, 60000);
+
+      async function apiJSON(url, opts) {
+        const r = await fetch(url, opts || {});
+        const j = await r.json();
+        return j;
+      }
+
+      // -------------------------
+      // Lists + Players
+      // -------------------------
+      async function loadMe() {
+        const j = await apiJSON("/api/me", { headers: { "Accept": "application/json" } });
+        if (!j.ok) return { ok: false };
+        ME = j;
+        return j;
+      }
+
+      async function loadLists() {
+        const j = await apiJSON("/api/lists", { headers: { "Accept": "application/json" } });
+        if (!j.ok) return j;
+        LISTS = j.lists || [];
+        ME.selected_list_id = j.selected_list_id;
+        return j;
+      }
+
+      function renderListsToolbar() {
+        ownerPill.innerHTML = ME.verified_player
+          ? `<img src="/static/verified/verified_24.png" alt="" class="owner-verified-icon"> ${esc(ME.owner_tag || '—')}`
+          : esc(ME.owner_tag || "—");
+        listIdInput.value = ME.selected_list_id ? String(ME.selected_list_id) : "";
+
+        listSelect.innerHTML = LISTS.map(l => {
+          const heart = l.is_favorite ? " ❤" : "";
+          const lock = l.is_system ? " 🔒" : "";
+          const sel = (Number(l.id) === Number(ME.selected_list_id)) ? "selected" : "";
+          return `<option value="${esc(l.id)}" ${sel}>${esc(l.name)}${heart}${lock}</option>`;
+        }).join("");
+
+        const selected = getSelectedList();
+        CURRENT_LIST = selected;
+
+        const editable = canEditSelectedList();
+        const shareable = canShareSelectedList();
+
+        // ✅ Hide management buttons when read-only
+        btnDeleteList.style.display = editable ? "" : "none";
+        btnRenameList.style.display = editable ? "" : "none";
+        btnFavorite.style.display   = editable ? "" : "none";
+
+        // ✅ Share can show even when NOT editable (My club)
+        btnShareList.style.display  = shareable ? "" : "none";
+
+        setFormEditable(editable);
+
+        identifyWrap.style.display = "none";
+        accountDashboard.style.display = "block";
+        accountSummary.style.display = "flex";
+        accountSummaryTag.textContent = ME.owner_tag || "—";
+        accountVerifyLink.href = `/verify-player/${encodeURIComponent((ME.owner_tag || "").replace(/^#/, ""))}`;
+        accountVerifyLink.style.display = ME.verified_player ? "none" : "inline-flex";
+        listsToolbar.style.display = "block";
+      }
+
+      async function loadPlayersForSelectedList() {
+        if (!ME.selected_list_id) {
+          setEmptyState("No list selected.");
+          return;
+        }
+
+        const j = await apiJSON(`/api/lists/${ME.selected_list_id}/players`, { headers: { "Accept": "application/json" } });
+        if (!j.ok) {
+          setEmptyState(j.message || "Could not load players.");
+          return;
+        }
+
+        const players = j.players || [];
+        if (!players.length) {
+          setEmptyState("This list is empty.");
+          return;
+        }
+        setTable(players);
+      }
+
+      async function refreshListsAndPlayers() {
+        await loadMe();
+
+        if (!ME.recognized) {
+          accountDashboard.style.display = "none";
+          listsToolbar.style.display = "none";
+          sharedToolbar.style.display = "none";
+          identifyWrap.style.display = "block";
+          return;
+        }
+
+        await loadLists();
+        renderListsToolbar();
+
+        // ✅ keep URL in sync once we know selected_list_id
+        syncUrlToSelectedList();
+
+
+        await loadPlayersForSelectedList();
+      }
+
+      // -------------------------
+      // Shared mode
+      // -------------------------
+      async function loadShared(token) {
+        SHARE = { active: true, token, list: null };
+
+        identifyWrap.style.display = "none";
+        accountDashboard.style.display = "block";
+        accountSummary.style.display = "none";
+        listsToolbar.style.display = "none";
+        sharedToolbar.style.display = "block";
+
+        identifyText.textContent = "Enter your player tag to save a copy of this shared list.";
+        identifyWrap.style.display = ME.recognized ? "none" : "block";
+
+        setFormEditable(false);
+
+        const j = await apiJSON(`/api/shared/${encodeURIComponent(token)}/players`, {
+          headers: { "Accept": "application/json" }
+        });
+
+        if (!j.ok) {
+          setEmptyState(j.message || "Shared list not found.");
+          return;
+        }
+
+        SHARE.list = j.list || null;
+
+        const listName = SHARE.list?.name || "Shared list";
+        const listOwner = SHARE.list?.owner_tag || "";
+        sharedText.textContent = `Viewing shared list: ${listName}${listOwner ? " • " + listOwner : ""} (read-only)`;
+
+        const players = j.players || [];
+        if (!players.length) {
+          setEmptyState("This shared list is empty.");
+          return;
+        }
+        setTable(players);
+      }
+
+      // -------------------------
+      // Event handlers
+      // -------------------------
+      btnLinkAccount.addEventListener("click", () => {
+        PENDING_PROFILE = null;
+        profileConfirmation.style.display = "none";
+        identifyForm.classList.remove("is-hidden");
+        identifyForm.reset();
+        identifyText.textContent = "Find the additional player, confirm it, then complete its own verification challenge.";
+        accountDashboard.style.display = "none";
+        identifyWrap.style.display = "block";
+        identifyTag.focus();
+      });
+
+      identifyForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const submitButton = identifyForm.querySelector("button[type='submit']");
+        const fd = new FormData(identifyForm);
+        const tag = (fd.get("tag") || "").toString().trim();
+        void 0;
+
+        submitButton.disabled = true;
+        identifyText.textContent = "Checking that player tag…";
+
+        let j;
+        try {
+          const res = await fetch("/identify", {
+            method: "POST",
+            body: fd,
+            headers: { "Accept": "application/json" }
+          });
+          j = await res.json();
+        } catch (_) {
+          j = { ok: false, message: "Could not reach the server. Try again." };
+        } finally {
+          submitButton.disabled = false;
+        }
+
+        if (!j.ok) {
+          identifyText.textContent = j.message || "Could not find that profile.";
+          return;
+        }
+
+        PENDING_PROFILE = j;
+        identifyForm.classList.add("is-hidden");
+        confirmProfileIcon.src = j.icon_id
+          ? `https://cdn.brawlify.com/profile-icons/regular/${encodeURIComponent(j.icon_id)}.png`
+          : "/static/models/default.png";
+        confirmProfileName.textContent = j.player_name || j.owner_tag;
+        confirmProfileDetails.textContent = `${j.owner_tag} • ${Number(j.trophies || 0).toLocaleString()} trophies`;
+        confirmViewAnalytics.href = `/player/${encodeURIComponent(String(j.owner_tag || "").replace(/^#/, ""))}`;
+        profileConfirmation.style.display = "grid";
+      });
+
+      btnChangeProfile.addEventListener("click", () => {
+        PENDING_PROFILE = null;
+        profileConfirmation.style.display = "none";
+        identifyForm.classList.remove("is-hidden");
+        identifyText.textContent = "You will confirm the profile before verification begins.";
+        identifyTag.focus();
+      });
+
+      btnConfirmProfile.addEventListener("click", async () => {
+        if (!PENDING_PROFILE) return;
+        btnConfirmProfile.disabled = true;
+        const original = btnConfirmProfile.textContent;
+        btnConfirmProfile.textContent = "Opening account…";
+        let j;
+        try {
+          const res = await fetch("/identify/confirm", {
+            method: "POST",
+            headers: { "Accept": "application/json" }
+          });
+          j = await res.json();
+        } catch (_) {
+          j = { ok: false, message: "Could not reach the server. Try again." };
+        } finally {
+          btnConfirmProfile.disabled = false;
+          btnConfirmProfile.textContent = original;
+        }
+
+        if (!j.ok) {
+          profileConfirmation.style.display = "none";
+          identifyForm.classList.remove("is-hidden");
+          identifyText.textContent = j.message || "Could not open that account.";
+          PENDING_PROFILE = null;
+          return;
+        }
+
+        await loadMe();
+
+        if (SHARE.active && SHARE.token) {
+          identifyWrap.style.display = "none";
+          alert("Recognized ✅ Now click 'Save a copy' to add this list to your account.");
+          return;
+        }
+
+        await refreshListsAndPlayers();
+      });
+
+      listSelect.addEventListener("change", async () => {
+        const list_id = listSelect.value;
+        void 0;
+
+        const j = await apiJSON("/api/lists/select", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({ list_id: Number(list_id) })
+        });
+
+        if (!j.ok) {
+          alert(j.message || "Could not select list.");
+          return;
+        }
+
+        ME.selected_list_id = j.selected_list_id;
+        listIdInput.value = String(ME.selected_list_id);
+
+        // ✅ Update URL for share/navigation
+        syncUrlToSelectedList();
+
+        await refreshListsAndPlayers();
+
+      });
+
+      btnNewList.addEventListener("click", async () => {
+        const name = prompt("New list name:", "My new list");
+        if (!name) return;
+
+        void 0;
+
+        const j = await apiJSON("/api/lists", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({ name })
+        });
+
+        if (!j.ok) {
+          alert(j.message || "Could not create list.");
+          return;
+        }
+        await refreshListsAndPlayers();
+      });
+
+      btnRenameList.addEventListener("click", async () => {
+        if (!ME.selected_list_id) return;
+        if (!canEditSelectedList()) return;
+
+        const currentName = listSelect.selectedOptions[0]?.textContent?.replace(" ❤", "").replace(" 🔒", "") || "";
+        const name = prompt("Rename list:", currentName);
+        if (!name) return;
+
+        void 0;
+
+        const j = await apiJSON(`/api/lists/${ME.selected_list_id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({ name })
+        });
+
+        if (!j.ok) {
+          alert(j.message || "Could not rename list.");
+          return;
+        }
+        await refreshListsAndPlayers();
+      });
+
+      btnFavorite.addEventListener("click", async () => {
+        if (!ME.selected_list_id) return;
+        if (!canEditSelectedList()) return;
+
+        void 0;
+
+        const j = await apiJSON("/api/lists/favorite", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({ list_id: Number(ME.selected_list_id) })
+        });
+
+        if (!j.ok) {
+          alert(j.message || "Could not favorite list.");
+          return;
+        }
+        await refreshListsAndPlayers();
+      });
+
+      btnDeleteList.addEventListener("click", async () => {
+        if (!ME.selected_list_id) return;
+        if (!canEditSelectedList()) return;
+        if (!confirm("Delete this list? (Players will keep being tracked; the list will just be hidden.)")) return;
+
+        void 0;
+
+        const j = await apiJSON("/api/lists/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({ list_id: Number(ME.selected_list_id) })
+        });
+
+        if (!j.ok) {
+          alert(j.message || "Could not delete list.");
+          return;
+        }
+        await refreshListsAndPlayers();
+      });
+
+      if (btnMyClub) {
+        btnMyClub.addEventListener("click", async () => {
+          void 0;
+
+          const j = await apiJSON("/api/my-club/select", {
+            method: "POST",
+            headers: { "Accept": "application/json" }
+          });
+
+          if (!j.ok) {
+            alert(j.message || "Could not load your club.");
+            return;
+          }
+
+          ME.selected_list_id = j.selected_list_id || j.list_id;
+          listIdInput.value = String(ME.selected_list_id);
+
+          // ✅ URL sync
+          syncUrlToSelectedList();
+
+          await refreshListsAndPlayers();
+        });
+      }
+
+      // ✅ Share list button: creates token and copies URL to clipboard
+      if (btnShareList) {
+        btnShareList.addEventListener("click", async () => {
+          if (!ME.selected_list_id) return;
+          if (!canShareSelectedList()) return;
+
+          void 0;
+
+          const j = await apiJSON(`/api/lists/${ME.selected_list_id}/share`, {
+            method: "POST",
+            headers: { "Accept": "application/json" }
+          });
+
+          if (!j.ok || !j.share_token) {
+            alert(j.message || "Could not share list.");
+            return;
+          }
+
+          const token = j.share_token;
+          const url = new URL(window.location.href);
+          url.searchParams.set("share", token);
+          url.searchParams.delete("list");
+
+          try {
+            await navigator.clipboard.writeText(url.toString());
+            alert("Share link copied ✅");
+          } catch (e) {
+            prompt("Copy this share link:", url.toString());
+          }
+        });
+      }
+
+      if (btnSaveCopy) {
+        btnSaveCopy.addEventListener("click", async () => {
+          if (!SHARE.active || !SHARE.token) return;
+
+          await loadMe();
+          if (!ME.recognized) {
+            identifyWrap.style.display = "block";
+            alert("Enter your tag first, then click 'Save a copy' again.");
+            return;
+          }
+
+          void 0;
+
+          const j = await apiJSON(`/api/shared/${encodeURIComponent(SHARE.token)}/copy`, {
+            method: "POST",
+            headers: { "Accept": "application/json" }
+          });
+
+          if (!j.ok) {
+            alert(j.message || "Could not save a copy.");
+            return;
+          }
+
+          SHARE = { active: false, token: null, list: null };
+          sharedToolbar.style.display = "none";
+          identifyText.textContent = "Enter your player tag to load your lists.";
+          clearShareFromUrl();
+
+          await refreshListsAndPlayers();
+        });
+      }
+
+      document.addEventListener("click", async (e) => {
+        const b = e.target.closest(".btn-remove-player");
+        if (!b) return;
+        if (!canEditSelectedList()) return;
+
+        const player_tag = b.getAttribute("data-tag");
+        if (!player_tag || !ME.selected_list_id) return;
+
+        void 0;
+
+        const j = await apiJSON("/api/lists/remove-player", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({ list_id: Number(ME.selected_list_id), player_tag })
+        });
+
+        if (!j.ok) {
+          alert(j.message || "Could not remove player.");
+          return;
+        }
+        await loadPlayersForSelectedList();
+      });
+
+      document.addEventListener("click", async (e) => {
+        const switchButton = e.target.closest(".btn-switch-account");
+        const primaryButton = e.target.closest(".btn-primary-account");
+        const unlinkButton = e.target.closest(".btn-unlink-account");
+        if (!switchButton && !primaryButton && !unlinkButton) return;
+        const player_tag = (switchButton || primaryButton || unlinkButton).getAttribute("data-tag");
+        if (!player_tag) return;
+
+        if (primaryButton) {
+          const j = await apiJSON("/api/accounts/primary", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Accept": "application/json" },
+            body: JSON.stringify({ player_tag })
+          });
+          if (!j.ok) return alert(j.message || "Could not update your main account.");
+          await loadPlayersForSelectedList();
+          return;
+        }
+
+        if (switchButton) {
+          const j = await apiJSON("/api/accounts/switch", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Accept": "application/json" },
+            body: JSON.stringify({ player_tag })
+          });
+          if (!j.ok) return alert(j.message || "Could not switch accounts.");
+          await refreshListsAndPlayers();
+          return;
+        }
+
+        if (!confirm(`Remove ${player_tag} from My Accounts? Its Verified Player badge will be revoked.`)) return;
+        const j = await apiJSON("/api/accounts/unlink", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({ player_tag })
+        });
+        if (!j.ok) return alert(j.message || "Could not remove that account.");
+        await refreshListsAndPlayers();
+      });
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (!canEditSelectedList()) return;
+
+        isSyncing = true;
+        btn.disabled = true;
+
+        showStatus();
+        setStatus("Adding player…");
+        statusPill.classList.add("loading");
+        warningEl.style.display = "block";
+        setProgress(5, "start");
+
+        const fd = new FormData(form);
+        const tag = (fd.get("tag") || "").toString().trim();
+
+        if (ME.recognized && ME.selected_list_id) {
+          fd.set("list_id", String(ME.selected_list_id));
+          listIdInput.value = String(ME.selected_list_id);
+        } else {
+          fd.delete("list_id");
+          listIdInput.value = "";
+        }
+
+        void 0;
+
+        try {
+          const res = await fetch(form.action, {
+            method: "POST",
+            body: fd,
+            headers: { "Accept": "application/json" }
+          });
+
+          const data = await res.json();
+
+          if (!data.ok) {
+            setStatus(data.message || "Error.");
+            setProgress(100, "error");
+            resetStatusUI();
+            return;
+          }
+
+          if (data.needs_refresh === false) {
+            setStatus(data.message || "Added to list ✅");
+            setProgress(100, "done");
+            resetStatusUI();
+            await refreshListsAndPlayers();
+            return;
+          }
+
+          setStatus("Syncing new player…");
+          setProgress(15, "profile");
+          await pollJob(data.job_id);
+
+        } catch (err) {
+          setStatus("Network/response error. Try again.");
+          setProgress(100, "error");
+          resetStatusUI();
+        }
+      });
+
+      // ✅ Only warn if we're actively syncing
+      window.addEventListener("beforeunload", (e) => {
+        if (isSyncing) {
+          e.preventDefault();
+          e.returnValue = "";
+        }
+      });
+
+      // -------------------------
+      // Logout
+      // -------------------------
+      async function logoutTag() {
+        void 0;
+
+        try {
+          const r = await fetch("/logout", {
+            method: "POST",
+            headers: { "Accept": "application/json" }
+          });
+          try { await r.json(); } catch (_) {}
+        } catch (_) {}
+
+        window.location.reload();
+      }
+
+      if (btnLogout) {
+        btnLogout.addEventListener("click", () => {
+          if (!confirm("Sign out of StarrLabs on this browser? Your verified links stay protected and can be restored after you sign in again.")) return;
+          logoutTag();
+        });
+      }
+
+      if (btnSwitchPlayer) {
+        btnSwitchPlayer.addEventListener("click", async () => {
+          const accounts = LISTS.find(list => list.system_key === "my_accounts");
+          if (!accounts) {
+            identifyWrap.style.display = "block";
+            identifyText.textContent = "Enter another player tag, then confirm and verify it.";
+            identifyWrap.scrollIntoView({behavior: "smooth", block: "start"});
+            return;
+          }
+          const j = await selectList(accounts.id);
+          if (!j.ok) return alert(j.message || "Could not open My Accounts.");
+          ME.selected_list_id = j.selected_list_id;
+          await refreshListsAndPlayers();
+          document.getElementById("tracked-section")?.scrollIntoView({behavior: "smooth", block: "start"});
+        });
+      }
+
+      // -------------------------
+      // Boot
+      // -------------------------
+      (async function boot() {
+        try {
+          await loadMe();
+
+          const shareToken = getShareFromUrl();
+          if (shareToken) {
+            // ask backend who owns this token
+            const meta = await apiJSON(`/api/shared/${encodeURIComponent(shareToken)}/meta`, {
+              headers: { "Accept": "application/json" }
+            });
+
+            if (meta?.ok && meta.list_id) {
+              // if I'm the owner, just select the list and continue normal flow
+              if (ME.recognized && meta.owner_tag && meta.owner_tag === ME.owner_tag) {
+                const sel = await selectList(meta.list_id);
+                if (sel.ok) ME.selected_list_id = sel.selected_list_id;
+                sharedToolbar.style.display = "none";
+                await refreshListsAndPlayers();
+                return;
+              }
+            }
+
+            // otherwise, read-only shared view
+            await loadShared(shareToken);
+            return;
+          }
+
+
+          // ✅ if url has ?list=ID, select it before loading table
+          const listFromUrl = getListFromUrl();
+          if (ME.recognized && listFromUrl) {
+            const sel = await selectList(listFromUrl);
+            if (sel.ok) {
+              ME.selected_list_id = sel.selected_list_id;
+            }
+          }
+
+          sharedToolbar.style.display = "none";
+          await refreshListsAndPlayers();
+        } catch (e) {
+          console.error(e);
+          setEmptyState("Could not load data. Check server logs.");
+        }
+      })();
+    </script>
+  </div>
+</body>
+</html>

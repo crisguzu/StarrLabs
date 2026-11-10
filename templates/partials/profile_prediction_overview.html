@@ -1,0 +1,89 @@
+{% set c7 = companion_summary.windows.get(7, {}) %}
+{% set c14 = companion_summary.windows.get(14, {}) %}
+{% set c30 = companion_summary.windows.get(30, {}) %}
+<section class="companion-summary" aria-labelledby="companion-summary-title">
+  <img class="sl-companion-missy" src="/static/starrlabs/phase2/characters/{% if (c30.overperformance or 0) > 0 %}missy-victory-celebration{% elif (c30.overperformance or 0) < 0 %}missy-tablet-concerned{% else %}missy-tablet-analysis{% endif %}.webp" alt="MISSY presenting the prediction overview">
+  <div class="companion-summary-head">
+    <div>
+      <span class="companion-summary-kicker">PREDICTION OVERVIEW</span>
+      <h2 id="companion-summary-title">Did you beat the expectation?</h2>
+      <p>Your overall Ladder performance belongs here. Individual battle verdicts stay in Battle history.</p>
+    </div>
+    <a class="companion-score-dial companion-score-link" href="/battles/{{ player.tag.lstrip('#') }}?victory_score=true" aria-label="Open the battles included in your Victory Score"><span>VICTORY SCORE</span><strong>{% if companion_summary.victory_score is not none %}{{ companion_summary.victory_score }}{% else %}—{% endif %}</strong><small>{% if companion_summary.victory_score is not none %}{{ companion_summary.victory_label }} · {{ companion_summary.eligible_battles }} eligible battles · {{ companion_summary.evidence_label }}{% else %}Not enough eligible battles{% endif %}</small><em>VIEW SCORE BATTLES →</em></a>
+  </div>
+  <div class="companion-window-grid">
+    {% for days, window in [(7, c7), (14, c14), (30, c30)] %}
+      {% set delta = window.overperformance or 0 %}
+      <article class="companion-window {% if delta > 0 %}is-ahead{% elif delta < 0 %}is-behind{% else %}is-even{% endif %}">
+        <div class="companion-window-title"><span>{{ days }} DAYS</span><b>{{ window.modeled_battles or 0 }} modeled</b></div>
+        <div class="companion-versus"><div><small>ACTUAL WINS</small><strong>{{ window.actual_wins or 0 }}</strong></div><i>VS</i><div><small>EXPECTED WINS</small><strong>{{ window.expected_wins or 0 }}</strong></div></div>
+        <div class="companion-delta"><strong>{% if delta > 0 %}+{% endif %}{{ delta }}</strong><span>{% if delta > 0 %}wins above expectation{% elif delta < 0 %}wins below expectation{% else %}right on expectation{% endif %}</span></div>
+        <div class="companion-coverage"><progress max="100" value="{{ window.coverage_pct or 0 }}">{{ window.coverage_pct or 0 }}%</progress><small>{{ window.coverage_pct or 0 }}% modeled · {{ window.unmodeled_battles or 0 }} unmodeled</small></div>
+      </article>
+    {% endfor %}
+  </div>
+  <div class="companion-trend-row">
+    <div class="companion-trend-copy"><span>14-DAY EXPECTATION TREND</span><strong class="{% if companion_summary.trend_change > 0 %}is-positive{% elif companion_summary.trend_change < 0 %}is-negative{% endif %}">{% if companion_summary.trend_change > 0 %}+{% endif %}{{ companion_summary.trend_change }} wins</strong><small>Latest seven days versus the prior seven.</small></div>
+    <div class="companion-spark" aria-label="Daily wins above or below model expectation">{% for point in companion_summary.trend %}<i class="trend-level-{{ point.level }} {% if point.delta > 0 %}is-positive{% elif point.delta < 0 %}is-negative{% else %}is-zero{% endif %}" title="{{ point.day }} · {{ point.delta }} wins vs expected"></i>{% endfor %}</div>
+  </div>
+  <div class="score-contributor-panel">
+    <div class="score-contributor-head"><span>SCORE EVIDENCE</span><strong>Which results moved the 30-day read?</strong><small>Raw result signal is actual result minus predicted win probability. V2 regularizes the complete set, so these are evidence contributions—not literal score points.</small></div>
+    <div class="score-contributor-grid">
+      <div><b>STRONGEST POSITIVE</b>{% for item in companion_summary.score_contributors_positive %}<a href="/battles/{{ player.tag.lstrip('#') }}?victory_score=true"><span>{{ item.brawler_name }} · {{ item.mode_name }}</span><strong>+{{ item.result_signal }}</strong><small>Won at {{ item.predicted_pct }}%</small></a>{% else %}<p>No positive result evidence yet.</p>{% endfor %}</div>
+      <div><b>STRONGEST NEGATIVE</b>{% for item in companion_summary.score_contributors_negative %}<a href="/battles/{{ player.tag.lstrip('#') }}?victory_score=true"><span>{{ item.brawler_name }} · {{ item.mode_name }}</span><strong>{{ item.result_signal }}</strong><small>Lost at {{ item.predicted_pct }}%</small></a>{% else %}<p>No negative result evidence yet.</p>{% endfor %}</div>
+    </div>
+    <footer><span>Probability = match estimate</span><span>Confidence = not separately estimated yet</span><span>Freshness = prediction timestamp</span><span>Evidence = Victory Score support</span></footer>
+  </div>
+</section>
+
+<section class="session-console" aria-labelledby="session-console-title">
+  <div class="session-console-head">
+    <div><span>SESSION &amp; STREAK LOG</span><h2 id="session-console-title">How are your play sessions unfolding?</h2></div>
+    <div class="streak-chip streak-chip--{{ session_context.streak_kind or 'none' }}"><small>CURRENT STREAK</small><strong>{{ session_context.streak_count or 0 }} {{ session_context.streak_kind or 'games' }}</strong></div>
+  </div>
+  <div class="session-kpis">
+    <article><span>SESSIONS · 30D</span><strong>{{ session_context.session_count_30d }}</strong><small>A 45-minute break starts a new session.</small></article>
+    <article><span>LONGEST WIN RUN · 30D</span><strong>{{ session_context.longest_win_streak_30d }}</strong><small>Consecutive recorded victories.</small></article>
+    {% if session_context.current %}<article><span>LATEST SESSION</span><strong>{{ session_context.current.wins }}–{{ session_context.current.losses }}</strong><small>{{ session_context.current.battles }} battles · {{ session_context.current.duration_minutes }} min · {{ session_context.current.win_rate }}% wins</small></article>{% endif %}
+  </div>
+  <div class="session-strip" aria-label="Recent play sessions">
+    {% for session in session_context.recent %}<article><time>{{ session.newest_at.strftime('%b %d · %H:%M') }}</time><strong>{{ session.wins }}W · {{ session.losses }}L{% if session.draws %} · {{ session.draws }}D{% endif %}</strong><small>{{ session.battles }} games · {{ session.duration_minutes }}m{% if session.brawlers %} · {{ session.brawlers[:3]|join(', ') }}{% endif %}</small></article>{% else %}<p>No sessions recorded in the last 30 days.</p>{% endfor %}
+  </div>
+</section>
+
+<section class="relationship-console" aria-labelledby="relationship-title">
+  <div class="relationship-head"><div><span>MEETING HISTORY</span><h2 id="relationship-title">Teammates, rivals &amp; counters</h2></div><p>Descriptive 30-day results from complete roster observations. Player identity is never fed into the prediction model.</p></div>
+  <div class="relationship-columns">
+    <div><b>FREQUENT TEAMMATES</b>{% for item in relationship_context.teammate %}<article class="relationship-person"><span>{{ item.player_name or item.player_tag }}</span><strong>{{ item.win_rate }}%</strong><small>{{ item.meetings }} meetings · latest {{ item.latest_brawler or 'unknown brawler' }}</small></article>{% else %}<p>No repeated teammate evidence yet.</p>{% endfor %}</div>
+    <div><b>FREQUENT OPPONENTS</b>{% for item in relationship_context.opponent %}<article class="relationship-person"><span>{{ item.player_name or item.player_tag }}</span><strong>{{ item.win_rate }}%</strong><small>{{ item.meetings }} meetings · your observed win rate</small></article>{% else %}<p>No repeated opponent evidence yet.</p>{% endfor %}</div>
+  </div>
+  <footer>“Counter” here means a difficult observed opponent history—not proof of causation or a model feature.</footer>
+</section>
+
+<section class="performance-lenses" aria-labelledby="performance-lenses-title">
+  <div class="performance-lenses-head"><div><span>30-DAY LADDER LENSES</span><h2 id="performance-lenses-title">Where are you beating the model?</h2></div><p>Actual wins versus expected wins, with sample-size labels.</p></div>
+  <div class="lens-tabs" role="tablist" aria-label="Performance breakdown"><button type="button" class="is-active" data-lens="brawler">Brawlers</button><button type="button" data-lens="mode">Modes</button><button type="button" data-lens="map">Maps</button></div>
+  {% for dimension in ['brawler', 'mode', 'map'] %}
+    <div class="lens-panel {% if dimension == 'brawler' %}is-active{% endif %}" data-lens-panel="{{ dimension }}">
+      {% if companion_breakdowns[dimension] %}{% for item in companion_breakdowns[dimension] %}
+        <article class="lens-row {% if item.delta > 0 %}is-ahead{% elif item.delta < 0 %}is-behind{% else %}is-even{% endif %}">
+          <div class="lens-identity">{% if item.icon %}<img src="{{ item.icon }}" alt="">{% else %}<i></i>{% endif %}<div><strong>{{ item.label }}</strong><small>{{ item.battles }} battles · <em class="sample-{{ item.sample_class }}">{{ item.sample_label }}</em></small></div></div>
+          <div class="lens-bars"><span><small>ACTUAL</small><i style="--value:{{ item.bar_actual }}%"></i><b>{{ item.actual_rate }}%</b></span><span><small>EXPECTED</small><i style="--value:{{ item.bar_expected }}%"></i><b>{{ item.expected_rate }}%</b></span></div>
+          <div class="lens-delta"><strong>{% if item.delta > 0 %}+{% endif %}{{ item.delta }}</strong><small>wins vs expected</small></div>
+        </article>
+      {% endfor %}{% else %}<p class="lens-empty">No modeled Ladder battles in this 30-day window.</p>{% endif %}
+    </div>
+  {% endfor %}
+  <footer>Only validated Ladder predictions are included. Early read means fewer than 10 battles; Emerging means 10–19.</footer>
+</section>
+
+<section class="context-deck context-deck--{{ progression_context.status }}" aria-labelledby="context-deck-title">
+  <div class="context-deck-head"><div><span class="context-live-dot"></span><div><small>DATA &amp; PROGRESSION</small><h2 id="context-deck-title">Context you can trust</h2></div></div><strong>{% if progression_context.status == 'healthy' %}Fresh{% elif progression_context.status == 'attention' %}Gap flagged{% else %}Refresh delayed{% endif %}</strong></div>
+  <div class="context-grid">
+    <article><span>COLLECTION</span><strong>{% if progression_context.poll_age_minutes is not none %}{{ progression_context.poll_age_minutes }}m ago{% else %}No recent poll{% endif %}</strong><small>Battle polling · normally every {{ (progression_context.polling_interval_seconds or 900) // 60 }} minutes</small>{% if progression_context.possible_gap or progression_context.possible_gap_battles_30d %}<em>{{ progression_context.possible_gap_battles_30d }} recent rows carry a possible-gap flag</em>{% else %}<em class="is-good">No collection gap currently flagged</em>{% endif %}</article>
+    <article><span>PROFILE SNAPSHOT</span><strong>{% if progression_context.profile_age_minutes is not none %}{{ progression_context.profile_age_minutes }}m ago{% else %}Not captured yet{% endif %}</strong><small>Current context; never backfilled onto older battles</small><em class="is-good">Timestamped point-in-time source</em></article>
+    <article class="context-ranked"><span>COMPETITIVE RANKED</span><strong>{{ progression_context.ranked_rank_name or 'Unranked' }}{% if progression_context.ranked_elo %} · {{ progression_context.ranked_elo }} ELO{% endif %}</strong><small>Season best: {{ progression_context.highest_season_ranked_rank_name or '—' }}</small><div class="context-meter"><i style="--coverage:{{ progression_context.ranked_context_pct }}%"></i></div><em>{{ progression_context.ranked_elo_context_30d }}/{{ progression_context.ranked_battles_30d }} recent Ranked battles have honest pre-battle ELO · model pending</em></article>
+    <article><span>ACCOUNT PROGRESSION</span><strong>{{ progression_context.trophies or '—' }} trophies</strong><small>Best {{ progression_context.highest_trophies or '—' }} · Prestige {{ progression_context.total_prestige_level if progression_context.total_prestige_level is not none else '—' }}</small><em>Current context—not prediction input unless captured before battle</em></article>
+  </div>
+  <footer><span>Predictions refreshed {% if progression_context.latest_prediction_at %}<time data-context-time="{{ progression_context.latest_prediction_at.isoformat() }}">{{ progression_context.latest_prediction_at }}</time>{% else %}—{% endif %}</span><span>Ranked remains informational until its separate model passes validation.</span></footer>
+</section>
