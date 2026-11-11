@@ -8,7 +8,7 @@ StarrLabs turns short-lived game API observations into durable, explainable anal
 
 **Maintainer:** [Cristian Guzman Urrutia (@crisguzu)](https://github.com/crisguzu). This owner-authorized public source edition was prepared and hardened with AI assistance; see [source provenance](PROVENANCE.md). Contribution statements do not imply solo authorship of every component.
 
-**Review path:** [Local installation](#local-installation) Â· [Observed verification and limits](docs/VERIFICATION.md) Â· [Architecture/source map](docs/architecture.md). **Stack:** Python, FastAPI/Jinja2 and PostgreSQL; optional ML remains separate.
+**Review path:** [Local installation](#local-installation) · [Observed verification and limits](docs/VERIFICATION.md) · [Architecture/source map](docs/architecture.md). **Stack:** Python, FastAPI/Jinja2 and PostgreSQL; optional ML remains separate.
 
 ## Reproducible data-product case study
 
@@ -32,7 +32,7 @@ Actual application UI with a fictional player and synthetic API responsesân
 
 ![StarrLabs architecture: APIs feed collectors and PostgreSQL; FastAPI serves analytics, with separate model jobs and configured identity providers](docs/architecture.svg)
 
-[Architecture and source map](docs/architecture.md) Â· [Standalone diagram](docs/architecture.html) Â· [Security boundaries](SECURITY.md)
+[Architecture and source map](docs/architecture.md) · [Standalone diagram](docs/architecture.html) · [Security boundaries](SECURITY.md)
 
 ### Engineering focus
 
