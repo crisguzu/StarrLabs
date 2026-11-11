@@ -21,3 +21,11 @@ A focused mobile WebKit check was attempted but could not launch because its hos
 ## Reproduce backend checks
 
 Install requirements-test.txt. Set POSTGRES_BIN to your PostgreSQL 17 binary directory, and STARRLABS_TEST_SCRATCH to a protected executable RAM-backed directory on your Linux test host (or use XDG_RUNTIME_DIR). Then run tests/schema_smoke.py and tests/app_smoke.py with explicit memory, CPU, task, per-file and wall limits. No existing database is connected to; the disposable server listens on a protected Unix socket, not a network interface. The no-sync test setting is not a durability/backup proof. The application smoke also writes fictional rendered pages under ignored .smoke-rendered/ for independent frontend inspection.
+
+## Latest schema-only checkpoint (2026-11-10)
+
+At application source revision d7049ea, all 26 schema-test inputs were SHA-256 matched to an isolated Linux x86_64 host before execution: the baseline, 24 migrations and tests/schema_smoke.py. With PostgreSQL 17.10, the observed result was schema=PASS, tables=59, playerRecords=0, existingDatabaseConnections=0. The owned PostgreSQL server exited and its protected RAM scratch was removed. Limits: 512 MiB RAM, one CPU, 32 tasks, 30-second job wall limit, 20-second per-process CPU and 16 MiB per-file limit. This rerun is schema-only; prior app/browser checks above were not rerun by this checkpoint.
+
+The dependency-light policy suite was separately rerun on Linux arm64/Python 3.11.2: python3 -m unittest discover -s tests -p test_access_policy.py -v produced 15 tests, OK. This does not certify the full runtime on that platform.
+
+[Machine-readable schema checkpoint](verification/schema-2026-11-10.json).

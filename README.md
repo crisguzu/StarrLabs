@@ -6,6 +6,10 @@ StarrLabs turns short-lived game API observations into durable, explainable anal
 
 > Self-hosted source release. Clean installation, database initialization, ownership isolation, explicit public sharing and concurrent budgets pass on Linux/Python 3.12/PostgreSQL 17. Eighteen focused desktop/mobile Chromium checks pass using captured application HTML and synthetic API responses. WebKit could not start because its test host lacks a required library; Safari support, live provider delivery and production security are not certified. See [verification scope](docs/VERIFICATION.md).
 
+**Maintainer:** [Cristian Guzman Urrutia (@crisguzu)](https://github.com/crisguzu). This owner-authorized public source edition was prepared and hardened with AI assistance; see [source provenance](PROVENANCE.md). Contribution statements do not imply solo authorship of every component.
+
+**Review path:** [Local installation](#local-installation) · [Observed verification and limits](docs/VERIFICATION.md) · [Architecture/source map](docs/architecture.md). **Stack:** Python, FastAPI/Jinja2 and PostgreSQL; optional ML remains separate.
+
 ## Screenshots (fictional demo)
 
 Actual application UI with a fictional player and synthetic API responses—not live player records or a hosted service. Empty charts are intentional demo state, not performance claims.
