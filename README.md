@@ -93,3 +93,7 @@ No real player/account records, secrets, databases, datasets, model weights, per
 Original code/documentation and original neutral SVG assets are [MIT licensed](LICENSE). Lilita One retains its full SIL OFL 1.1 license. Pinned local chart packages retain their upstream MIT notices. Existing unverified/generated artwork and Supercell/FanKit binaries are not bundled. See [third-party notices](THIRD_PARTY_NOTICES.md).
 
 This material is unofficial and is not endorsed by Supercell. See [Supercellâs Fan Content Policy](https://supercell.com/en/fan-content-policy/). No code license relicenses third-party trademarks or game imagery.
+
+## Bounded synthetic performance evidence
+
+[Reproducible protocol,raw measurements and explicit limitations](docs/PERFORMANCE.md) · [Same-rubric review and remaining gates](docs/PORTFOLIO_REVIEW.md). Small single-host microprobes are not production capacity,SLA or power-loss evidence.
