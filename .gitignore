@@ -22,3 +22,8 @@ app-smoke-*.log
 runtime-tested-versions.json
 
 .smoke-rendered/
+
+.browser-results/
+schema-smoke-last.log
+
+node_modules/

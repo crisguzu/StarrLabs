@@ -4,7 +4,17 @@ import json, os, shutil, subprocess, tempfile, time
 ROOT = Path(__file__).resolve().parents[1]
 BIN = Path(os.environ["POSTGRES_BIN"])
 
-def main():
+def wait_for_ready(is_ready, is_exited, sleep=time.sleep, attempts=30):
+    """Socket existence is not proof PostgreSQL has finished recovery/startup."""
+    for _ in range(attempts):
+        if is_exited():
+            raise RuntimeError("Disposable PostgreSQL exited during startup")
+        if is_ready():
+            return
+        sleep(.1)
+    raise RuntimeError("Disposable PostgreSQL did not accept connections before readiness deadline")
+
+def main(check=None):
     if os.stat("/dev/shm").st_uid not in (0, os.getuid()):
         raise RuntimeError("Unexpected shared-memory mount owner")
     work = Path(tempfile.mkdtemp(prefix="starrlabs-schema-", dir=os.environ.get("STARRLABS_TEST_SCRATCH",os.environ.get("XDG_RUNTIME_DIR","/dev/shm"))))
@@ -19,13 +29,15 @@ def main():
         subprocess.run([str(BIN / "initdb"), "-D", str(data), "-U", "starrlabs", "--auth-local=trust", "--auth-host=reject", "--no-sync"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, timeout=8)
         log = (work / "postgres.log").open("wb")
         proc = subprocess.Popen([str(BIN / "postgres"), "-D", str(data), "-k", str(sock), "-p", "55447", "-c", "listen_addresses=", "-c", "shared_buffers=8MB", "-c", "max_connections=8", "-c", "max_wal_size=32MB", "-c", "min_wal_size=32MB", "-c", "wal_level=minimal", "-c", "max_wal_senders=0"], stdout=log, stderr=log)
-        for _ in range(30):
-            if (sock / ".s.PGSQL.55447").exists():
-                break
-            if proc.poll() is not None:
-                raise RuntimeError("Disposable PostgreSQL exited during startup: " + (work / "postgres.log").read_text(errors="replace")[-3000:])
-            time.sleep(.1)
-        sql((ROOT / "schema/0000_baseline.sql").read_text())
+        def ready():
+            return subprocess.run([str(BIN / "pg_isready"), "-q"], env=env,
+                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                  timeout=1).returncode == 0
+        wait_for_ready(ready, lambda: proc.poll() is not None)
+        try:
+            sql((ROOT / "schema/0000_baseline.sql").read_text())
+        except subprocess.CalledProcessError as exc:
+            raise RuntimeError("Baseline SQL failed: " + exc.output.decode(errors="replace")[-3000:]) from None
         sql("CREATE TABLE public.schema_migrations(version text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())")
         for p in sorted((ROOT / "migrations").glob("*.sql")):
             try:
@@ -36,6 +48,8 @@ def main():
         assert int(sql("SELECT count(*) FROM public.battles")) == 0
         assert int(sql("SELECT count(*) FROM public.player_profiles")) == 0
         print(json.dumps({"schema": "PASS", "postgres": sql("SHOW server_version"), "tables": tables, "playerRecords": 0, "existingDatabaseConnections": 0}))
+        if check is not None:
+            check(sql)
     finally:
         if proc is not None and proc.poll() is None:
             proc.terminate()

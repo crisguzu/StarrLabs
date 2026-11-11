@@ -10,9 +10,13 @@ StarrLabs turns short-lived game API observations into durable, explainable anal
 
 **Review path:** [Local installation](#local-installation) · [Observed verification and limits](docs/VERIFICATION.md) · [Architecture/source map](docs/architecture.md). **Stack:** Python, FastAPI/Jinja2 and PostgreSQL; optional ML remains separate.
 
+## Reproducible data-product case study
+
+[Contract, SQL metric and one-command PostgreSQL walkthrough](docs/DATA_CONTRACT.md): fictional observations → content-addressed raw records → deduplicated battle grain → actual point-in-time view → win-rate/context-coverage metrics. No provider credentials; isolated disposable database only. This is a four-row correctness example, not a performance benchmark.
+
 ## Screenshots (fictional demo)
 
-Actual application UI with a fictional player and synthetic API responses—not live player records or a hosted service. Empty charts are intentional demo state, not performance claims.
+Actual application UI with a fictional player and synthetic API responsesânot live player records or a hosted service. Empty charts are intentional demo state, not performance claims.
 
 **Desktop profile**
 
@@ -88,4 +92,8 @@ No real player/account records, secrets, databases, datasets, model weights, per
 
 Original code/documentation and original neutral SVG assets are [MIT licensed](LICENSE). Lilita One retains its full SIL OFL 1.1 license. Pinned local chart packages retain their upstream MIT notices. Existing unverified/generated artwork and Supercell/FanKit binaries are not bundled. See [third-party notices](THIRD_PARTY_NOTICES.md).
 
-This material is unofficial and is not endorsed by Supercell. See [Supercell’s Fan Content Policy](https://supercell.com/en/fan-content-policy/). No code license relicenses third-party trademarks or game imagery.
+This material is unofficial and is not endorsed by Supercell. See [Supercellâs Fan Content Policy](https://supercell.com/en/fan-content-policy/). No code license relicenses third-party trademarks or game imagery.
+
+## Bounded synthetic performance evidence
+
+[Reproducible protocol,raw measurements and explicit limitations](docs/PERFORMANCE.md) · [Same-rubric review and remaining gates](docs/PORTFOLIO_REVIEW.md). Small single-host microprobes are not production capacity,SLA or power-loss evidence.
