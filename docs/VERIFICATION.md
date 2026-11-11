@@ -29,3 +29,9 @@ At application source revision d7049ea, all 26 schema-test inputs were SHA-256 m
 The dependency-light policy suite was separately rerun on Linux arm64/Python 3.11.2: python3 -m unittest discover -s tests -p test_access_policy.py -v produced 15 tests, OK. This does not certify the full runtime on that platform.
 
 [Machine-readable schema checkpoint](verification/schema-2026-11-10.json).
+
+## Synthetic data-product slice
+
+[Contract and commands](DATA_CONTRACT.md) describe the actual-schema PostgreSQL 17.10 acceptance: five successful observations, six polls including a simulated 503, four raw payloads, four battles, three decisive results, two wins and three eligible profile contexts. Observed win_rate=0.666667 and context_coverage=0.75; all expected JSON values matched. Duplicate, late-arrival, future/missing-context and projection-replay checks passed. Owned database/scratch exited. This is a normalized fixture adapter, not live collector/provider acceptance or a benchmark.
+
+25 focused Python tests pass (15 access policy + 10 synthetic contract); the new CI gates those tests and the actual-schema walkthrough. A portable [18-case Chromium harness](../tests/BROWSER.md) now ships with the source; distinguish its separate captured-HTML/synthetic-response evidence from full app/provider E2E.

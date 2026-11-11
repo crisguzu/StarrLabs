@@ -4,7 +4,7 @@ import json, os, shutil, subprocess, tempfile, time
 ROOT = Path(__file__).resolve().parents[1]
 BIN = Path(os.environ["POSTGRES_BIN"])
 
-def main():
+def main(check=None):
     if os.stat("/dev/shm").st_uid not in (0, os.getuid()):
         raise RuntimeError("Unexpected shared-memory mount owner")
     work = Path(tempfile.mkdtemp(prefix="starrlabs-schema-", dir=os.environ.get("STARRLABS_TEST_SCRATCH",os.environ.get("XDG_RUNTIME_DIR","/dev/shm"))))
@@ -36,6 +36,8 @@ def main():
         assert int(sql("SELECT count(*) FROM public.battles")) == 0
         assert int(sql("SELECT count(*) FROM public.player_profiles")) == 0
         print(json.dumps({"schema": "PASS", "postgres": sql("SHOW server_version"), "tables": tables, "playerRecords": 0, "existingDatabaseConnections": 0}))
+        if check is not None:
+            check(sql)
     finally:
         if proc is not None and proc.poll() is None:
             proc.terminate()
