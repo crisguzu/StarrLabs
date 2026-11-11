@@ -1,0 +1,132 @@
+{
+  "sourceRevision": "d7049eac23a582a6016e422ac91790d55f901d76",
+  "date": "2026-11-10",
+  "command": "POSTGRES_BIN=<PostgreSQL17bin> STARRLABS_TEST_SCRATCH=<protectedexecutableRAM> python3 tests/schema_smoke.py",
+  "platform": "Linux x86_64,Python3.12,PostgreSQL17.10",
+  "migrationCount": 24,
+  "inputCount": 26,
+  "inputs": [
+    {
+      "path": "schema/0000_baseline.sql",
+      "sha256": "36e6fe04b6dbce092944036e5cf02fb4c4b414c94c93dfb862e5d8f1bdaf10cc"
+    },
+    {
+      "path": "tests/schema_smoke.py",
+      "sha256": "15264c098c02dbff53a387a932bd9a00770bda1d76d0063f55ce02e6ecb0a4e8"
+    },
+    {
+      "path": "migrations/0001_restored_baseline.sql",
+      "sha256": "a6c73e524cb3f5e1f7e10620d6628a85a42d82c9b109704e51411b92d688b954"
+    },
+    {
+      "path": "migrations/0002_phase4_collection_and_snapshots.sql",
+      "sha256": "b6c2dd27cfa12401b2bf1cfb51ed7a4187415ec599fb19e978c7682571178ec1"
+    },
+    {
+      "path": "migrations/0003_phase4_permissions.sql",
+      "sha256": "89c175ea4c73bcff4299d960fefd5e073618eca1a763b822810986ddc74bf9e5"
+    },
+    {
+      "path": "migrations/0004_phase4_retention.sql",
+      "sha256": "acb637582cee514495fb97bedf3ed766af05688b38b5ed25a2ca8d3b64dd71b1"
+    },
+    {
+      "path": "migrations/0005_phase4_point_in_time_context.sql",
+      "sha256": "8ea6e2b7ee7fe26231cdbce0fea181694975671a3b8ab1d6bea1903e4ab13159"
+    },
+    {
+      "path": "migrations/0006_player_ownership_verification.sql",
+      "sha256": "7c79bf0bb66282c36d0c1bacc2ae7cd3bb7758c767a450506f4c929d1f37f18f"
+    },
+    {
+      "path": "migrations/0007_multi_player_accounts.sql",
+      "sha256": "234f7ee25b1bceff1d53b96f73f629419e5418fa405df99780846c275900c912"
+    },
+    {
+      "path": "migrations/0008_account_recovery_audit.sql",
+      "sha256": "28e6a7442167903b8a03922b186b6c8f42ab6f45e6637bbc0fbb3b0c80b1fc64"
+    },
+    {
+      "path": "migrations/0009_missy_maintenance_runs.sql",
+      "sha256": "d42ac0a988e817ca1be3d1b7a9d7e042f8c78afdc36c33ed7d29f8a582f6df78"
+    },
+    {
+      "path": "migrations/0010_prediction_explanations.sql",
+      "sha256": "59b8536ec4e307be883a1104ab3e17f792c009b1b6fa256eb583be2690ecb32b"
+    },
+    {
+      "path": "migrations/0011_victory_score_v2.sql",
+      "sha256": "552934cde2a46a847d30af73c708c3c7b72451cff466a7ba1afc91ab272a680d"
+    },
+    {
+      "path": "migrations/0012_victory_score_history.sql",
+      "sha256": "633d14c7496ac1acde498cf6ac0ad84e2ec718fdc510b375c136ec5842144600"
+    },
+    {
+      "path": "migrations/0013_raw_battlelogs_and_reciprocal_collection.sql",
+      "sha256": "060f98f3ff03b66458d72d68708df6687215cbcb6694883f8802895d26a179cb"
+    },
+    {
+      "path": "migrations/0014_brawlapi_reference_snapshots.sql",
+      "sha256": "dc8694bba7ed53ac0ef82a2e623e39d5eddc56e3c83aba0c3dd04f86bc580eb7"
+    },
+    {
+      "path": "migrations/0015_point_in_time_game_data.sql",
+      "sha256": "de2bf92aa7d667e757113801f3d792492707acf94c8e00700fffee233b46938b"
+    },
+    {
+      "path": "migrations/0016_pipeline_maintenance.sql",
+      "sha256": "bf5bbeb4762ddb586f213549e8b57157440ddacd9a0ae197910edbbaef12416e"
+    },
+    {
+      "path": "migrations/0017_starrlabs_email_auth.sql",
+      "sha256": "cc592451ccacc9e396608ce9144d2bd3eddd56694d12c0f3b53db5a76ec2cbd0"
+    },
+    {
+      "path": "migrations/0018_opponent_profile_pool.sql",
+      "sha256": "fa5d6404a508fb14e1749b1a2f7480ae51e72212f463ecf6c97c7172101fe90b"
+    },
+    {
+      "path": "migrations/0019_model_metric_history.sql",
+      "sha256": "6528b7ed527061a2d28743702732ebe6a9cbf31080c688fc8bd8d96e6aaed7b2"
+    },
+    {
+      "path": "migrations/0020_loadout_feature_stages.sql",
+      "sha256": "16f02860dc3aeb3257a814da0454dfc35b6a122e32278e3089a9f42d591ad2e5"
+    },
+    {
+      "path": "migrations/0021_loadout_evaluation_rollout.sql",
+      "sha256": "bb49dc646a255754df70b6b3974bbd8c3745c377af833b2f62a8f295322868e5"
+    },
+    {
+      "path": "migrations/0022_bot_lobby_labels.sql",
+      "sha256": "a6d403a889c77bc6d2c8c2da568473b6efeeea3146fbc2c3e2c9dd4226f300d0"
+    },
+    {
+      "path": "migrations/0023_scout_profile_retry_queue.sql",
+      "sha256": "c8d639de9d60a043655e0407ff6d91758d92ceb4ce9eee28dc0338e6bc3e568d"
+    },
+    {
+      "path": "migrations/0024_standalone_request_admission.sql",
+      "sha256": "ed72c2c52ab8e3569f470da8b68acab2a269f3fb0eb91127ad4aa0f9cf725b9a"
+    }
+  ],
+  "observed": {
+    "schema": "PASS",
+    "postgres": "17.10",
+    "tables": 59,
+    "playerRecords": 0,
+    "existingDatabaseConnections": 0
+  },
+  "ownedDatabaseExited": true,
+  "ownedScratchRemoved": true,
+  "limits": {
+    "memoryBytes": 536870912,
+    "cpuQuota": "100%",
+    "tasks": 32,
+    "wallSeconds": 30,
+    "perProcessCPUSeconds": 20,
+    "perFileBytes": 16777216
+  },
+  "scope": "Schema-only;noexistingDBconnections,provider/app/browser/durabilitycertification"
+}

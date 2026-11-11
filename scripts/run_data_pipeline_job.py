@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Run one authoritative StarrLabs production data-pipeline job.
+"""Run one explicitly selected, serialized self-hosted data-pipeline job.
 
-Production schedules live in Pi systemd. GitHub workflows remain manual recovery
-and CI entry points, but do not independently schedule database mutations.
+This source distribution installs no scheduler or service and ships no GitHub
+workflow. Historical deployment schedules are not part of the public package.
+Operators must configure their own authorized data, credentials and bounded job
+execution. This CLI can mutate the configured database; it is not a read-only check.
 """
 
 import argparse
@@ -83,7 +85,7 @@ def main() -> int:
                     return TEMPORARY_FAILURE
                 if not waited:
                     print(
-                        f"PIPELINE_WAITING|{args.job}|another production data job is active",
+                        f"PIPELINE_WAITING|{args.job}|another selected data job is active",
                         flush=True,
                     )
                     waited = True

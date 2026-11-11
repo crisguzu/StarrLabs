@@ -13,3 +13,13 @@ The diagram summarizes the self-hosted source implementation, not a certified pr
 ## Deployment trust boundaries
 
 Application identity uses its own opaque email sessions and verified player ownership; Cloudflare identity headers and development overrides do not grant application identity. Legacy private operator/PoC routes return 404 in this distribution. Exact Host/Origin configuration and HTTPS settings remain the self-hosting operator’s responsibility. Focused fresh-schema, backend and Chromium frontend checks pass, but no source-level test certifies real provider delivery, Safari compatibility, remote ingress, operational security or tested backups. See VERIFICATION.md for the accepted scope and remaining limitations.
+
+## Decisions, tradeoffs and failure paths
+
+- **Single worker and bounded database access rather than a distributed queue:** database.py admits connections through a bounded pool; the README supports one application worker. Operational capacity cannot be multiplied by launching more workers and assuming shared budgets are sufficient.
+- **Raw observations plus derived projections:** services/collector.py retains content-hashed battlelog payloads and observation links, while battle projections upsert by battle time/player. Migration 0013 defines raw-payload uniqueness separately from the mutable last-observed metadata. This makes raw replay inspectable but requires explicit retention and metric semantics; it does not establish a universal event-uniqueness guarantee.
+- **Point-in-time context rather than future information:** migration 0005 selects only timestamped profile snapshots at or before battle time. Missing eligible context stays missing; this boundary is not evidence of prediction accuracy or complete historical coverage.
+- **Admission before paid work:** request_budget.py uses a transactional advisory lock and returns 429 when a budget is exhausted. database.py bounds checkout waiting. Provider timeouts/retries in services/collector.py do not replace operator quotas, consent or retention decisions.
+- **Empty-schema bootstrap rather than implicit upgrade:** scripts/init_db.py refuses a non-empty public schema. Migrations and backup/restore must be reviewed explicitly for existing data. The no-sync disposable schema test validates installation, not production durability.
+
+[Verification scope and exact schema evidence](VERIFICATION.md) separate schema, app, policy, browser, synthetic and unverified live-provider behavior.
