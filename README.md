@@ -6,6 +6,20 @@ StarrLabs turns short-lived game API observations into durable, explainable anal
 
 > Self-hosted source release. Clean installation, database initialization, ownership isolation, explicit public sharing and concurrent budgets pass on Linux/Python 3.12/PostgreSQL 17. Eighteen focused desktop/mobile Chromium checks pass using captured application HTML and synthetic API responses. WebKit could not start because its test host lacks a required library; Safari support, live provider delivery and production security are not certified. See [verification scope](docs/VERIFICATION.md).
 
+## Screenshots (fictional demo)
+
+Actual application UI with a fictional player and synthetic API responses—not live player records or a hosted service. Empty charts are intentional demo state, not performance claims.
+
+**Desktop profile**
+
+![StarrLabs desktop profile with fictional player data](docs/screenshots/profile-desktop.png)
+
+**Mobile profile**
+
+<img src="docs/screenshots/profile-mobile.png" alt="StarrLabs mobile profile with fictional player data" width="390">
+
+[Capture details and limitations](docs/screenshots/README.md).
+
 ## System design
 
 ![StarrLabs architecture: APIs feed collectors and PostgreSQL; FastAPI serves analytics, with separate model jobs and configured identity providers](docs/architecture.svg)
